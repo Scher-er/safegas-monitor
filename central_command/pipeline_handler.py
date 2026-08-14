@@ -1,14 +1,14 @@
 """
-SafeGas Monitor — Handler do Pipeline Completo (Etapas 4 + 5)
+SafeGas Monitor — Handler do Pipeline Completo (Etapas 4 – 7)
 =============================================================
 Encadeia as etapas de processamento recebidas pelo servidor:
 
     TelemetryPacket (Etapa 3)
-        → FilterPipeline.process()     (Etapa 4)
-        → LELCalculator.calculate()    (Etapa 5)
-        → AlertManager.classify()      (Etapa 5)
-        → [MongoTelemetryRepository]   (Etapa 6 — stub)
-        → [LatexReportGenerator]       (Etapa 7 — stub)
+        → FilterPipeline.process()       (Etapa 4)
+        → LELCalculator.calculate()      (Etapa 5)
+        → AlertManager.classify()        (Etapa 5)
+        → MongoTelemetryRepository       (Etapa 6)
+        → LatexReportGenerator           (Etapa 7 — apenas em CRITICAL)
 
 O `PipelineHandler` é passado como `on_packet` ao `CentralCommandServer`.
 
@@ -21,14 +21,17 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import logging
+from collections import deque
 from typing import Optional
 
 from config.data_contracts import TelemetryPacket, ProcessedReading
+from config.settings import REPORT_HISTORY_SIZE
 from central_command.filters.pipeline import FilterPipeline, FilterMode
 from central_command.lel.lel_calculator import LELCalculator
 from central_command.alerts.alert_manager import AlertManager
 from central_command.server import ClientSession
 from database.nosql.mongo_repository import MongoTelemetryRepository
+from reports.latex.report_generator import LatexReportGenerator
 
 log = logging.getLogger(__name__)
 
@@ -64,6 +67,7 @@ class PipelineHandler:
         self._alert_manager   = AlertManager()
         self._verbose         = verbose_output
         self._packets_processed = 0
+        self._incidents_generated = 0
 
         # Etapa 6: Repositório MongoDB (modo degradado se indisponível)
         self._mongo = MongoTelemetryRepository() if enable_mongo else None
@@ -71,6 +75,12 @@ class PipelineHandler:
             log.info("Persistência MongoDB ativa.")
         else:
             log.info("Persistência MongoDB desativada (modo sem banco).")
+
+        # Etapa 7: Gerador de laudos LaTeX
+        self._report_generator = LatexReportGenerator(compile_pdf=True)
+
+        # Histórico por dispositivo (buffer circular, tamanho configurado em settings)
+        self._history: dict[str, deque[ProcessedReading]] = {}
 
         log.info("PipelineHandler inicializado: filtro=%s", filter_mode)
 
@@ -97,32 +107,54 @@ class PipelineHandler:
         """
         self._packets_processed += 1
 
-        # ── Etapa 4: Filtragem ─────────────────────────────────────────
+        # ── Etapa 4: Filtragem ────────────────────────────────────────────────────────
         processed = self._filter_pipeline.process(packet)
 
-        # ── Etapa 5a: Cálculo de LEL ───────────────────────────────────
+        # ── Etapa 5a: Cálculo de LEL ──────────────────────────────────────────
         lel_result = self._lel_calculator.calculate(
             readings=processed.readings,
             temperature_c=packet.temperature_c,
             use_filtered=True,
         )
 
-        # ── Etapa 5b: Classificação de Alerta ──────────────────────────
+        # ── Etapa 5b: Classificação de Alerta ──────────────────────────────
         processed = self._alert_manager.classify(processed, lel_result)
 
-        # ── Saída de terminal (modo verbose) ───────────────────────────
+        # ── Atualiza histórico por dispositivo ─────────────────────────────────
+        dev = processed.device_id
+        if dev not in self._history:
+            self._history[dev] = deque(maxlen=REPORT_HISTORY_SIZE)
+        self._history[dev].append(processed)
+
+        # ── Saída de terminal (modo verbose) ────────────────────────────────
         if self._verbose:
             self._print_summary(packet, processed, lel_result)
 
-        # ── Etapa 6: Persistência no MongoDB ────────────────────────────
+        # ── Etapa 6: Persistência no MongoDB ──────────────────────────────
         if self._mongo:
             self._mongo.insert_reading(processed)
 
-        # ── Etapa 7 (stub): Laudo LaTeX se CRÍTICO ────────────────────────
-        # TODO (Etapa 7): if processed.alert_level == "CRITICAL":
-        #                     LatexReportGenerator.generate(...)
+        # ── Etapa 7: Laudo LaTeX se CRITICAL ──────────────────────────────
+        if processed.alert_level == "CRITICAL":
+            self._generate_report(processed, lel_result)
 
         return processed
+
+    # ------------------------------------------------------------------
+    def _generate_report(self, processed, lel_result):
+        """Gera laudo LaTeX e insere IncidentRecord no MongoDB (Etapa 7)."""
+        try:
+            history = list(self._history.get(processed.device_id, []))
+            incident = self._report_generator.generate(processed, lel_result, history)
+            self._incidents_generated += 1
+
+            # Persiste incidente no MongoDB (Etapa 6 + 7 integrado)
+            if self._mongo and incident:
+                self._mongo.insert_incident(incident)
+
+        except Exception as e:
+            # Não deixa falha no gerador derrubar o servidor
+            log.error("Erro ao gerar laudo LaTeX: %s", e, exc_info=True)
 
     # ------------------------------------------------------------------
     def _print_summary(self, packet, processed, lel_result):
@@ -157,11 +189,12 @@ class PipelineHandler:
     def stats(self) -> dict:
         """Estatísticas combinadas do handler."""
         return {
-            "packets_processed": self._packets_processed,
-            "alert_counts": self._alert_manager.stats,
-            "filter_mode": self._filter_pipeline.mode,
-            "tracked_devices": list(self._filter_pipeline.tracked_devices),
-            "mongo_available": self._mongo.is_available if self._mongo else False,
+            "packets_processed":   self._packets_processed,
+            "incidents_generated": self._incidents_generated,
+            "alert_counts":        self._alert_manager.stats,
+            "filter_mode":         self._filter_pipeline.mode,
+            "tracked_devices":     list(self._filter_pipeline.tracked_devices),
+            "mongo_available":     self._mongo.is_available if self._mongo else False,
         }
 
     def set_critical_callback(self, callback) -> None:
