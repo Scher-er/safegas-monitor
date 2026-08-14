@@ -28,6 +28,7 @@ from central_command.filters.pipeline import FilterPipeline, FilterMode
 from central_command.lel.lel_calculator import LELCalculator
 from central_command.alerts.alert_manager import AlertManager
 from central_command.server import ClientSession
+from database.nosql.mongo_repository import MongoTelemetryRepository
 
 log = logging.getLogger(__name__)
 
@@ -50,17 +51,26 @@ class PipelineHandler:
         self,
         filter_mode: FilterMode = "kalman",
         verbose_output: bool = True,
+        enable_mongo: bool = True,
     ):
         """
         Args:
             filter_mode:    modo do filtro ('moving_avg', 'kalman', 'both')
             verbose_output: se True, imprime resumo de cada pacote no terminal
+            enable_mongo:   se False, desativa a persistência no MongoDB
         """
         self._filter_pipeline = FilterPipeline(mode=filter_mode)
         self._lel_calculator  = LELCalculator()
         self._alert_manager   = AlertManager()
         self._verbose         = verbose_output
         self._packets_processed = 0
+
+        # Etapa 6: Repositório MongoDB (modo degradado se indisponível)
+        self._mongo = MongoTelemetryRepository() if enable_mongo else None
+        if self._mongo and self._mongo.is_available:
+            log.info("Persistência MongoDB ativa.")
+        else:
+            log.info("Persistência MongoDB desativada (modo sem banco).")
 
         log.info("PipelineHandler inicializado: filtro=%s", filter_mode)
 
@@ -104,10 +114,11 @@ class PipelineHandler:
         if self._verbose:
             self._print_summary(packet, processed, lel_result)
 
-        # ── Etapa 6 (stub): Persistência no MongoDB ────────────────────
-        # TODO (Etapa 6): MongoTelemetryRepository.insert(processed)
+        # ── Etapa 6: Persistência no MongoDB ────────────────────────────
+        if self._mongo:
+            self._mongo.insert_reading(processed)
 
-        # ── Etapa 7 (stub): Laudo LaTeX se CRÍTICO ────────────────────
+        # ── Etapa 7 (stub): Laudo LaTeX se CRÍTICO ────────────────────────
         # TODO (Etapa 7): if processed.alert_level == "CRITICAL":
         #                     LatexReportGenerator.generate(...)
 
@@ -150,6 +161,7 @@ class PipelineHandler:
             "alert_counts": self._alert_manager.stats,
             "filter_mode": self._filter_pipeline.mode,
             "tracked_devices": list(self._filter_pipeline.tracked_devices),
+            "mongo_available": self._mongo.is_available if self._mongo else False,
         }
 
     def set_critical_callback(self, callback) -> None:
