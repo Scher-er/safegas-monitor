@@ -18,6 +18,7 @@ import time
 
 from config.settings import SOCKET_HOST, SOCKET_PORT, SAMPLE_RATE_HZ
 from central_command.server import CentralCommandServer
+from central_command.pipeline_handler import PipelineHandler
 from epi_simulator.simulator import EPISimulator, SignalProfile
 from epi_simulator.client import EPISocketClient
 
@@ -39,8 +40,11 @@ def run_server(verbose: bool = False) -> None:
     print("=" * 60)
     print(" SafeGas Monitor — Central de Comando")
     print(f" Escutando em {SOCKET_HOST}:{SOCKET_PORT}")
+    print(" Pipeline ativo: Kalman → LEL (Le Chatelier) → Alertas")
     print(" Ctrl+C para encerrar\n")
-    with CentralCommandServer(host=SOCKET_HOST, port=SOCKET_PORT) as server:
+    handler = PipelineHandler(filter_mode="kalman", verbose_output=True)
+    with CentralCommandServer(host=SOCKET_HOST, port=SOCKET_PORT,
+                              on_packet=handler) as server:
         server.wait()
 
 
@@ -109,8 +113,12 @@ def run_demo(verbose: bool = False) -> None:
     print(" Cenário: vazamento crescente de CH4 + CO constante")
     print(" Ctrl+C para encerrar\n")
 
-    # 1. Sobe o servidor em background
-    server = CentralCommandServer(host=SOCKET_HOST, port=SOCKET_PORT)
+    # 1. Pipeline handler (Etapas 4+5)
+    handler = PipelineHandler(filter_mode="kalman", verbose_output=True)
+
+    # 2. Sobe o servidor em background
+    server = CentralCommandServer(host=SOCKET_HOST, port=SOCKET_PORT,
+                                  on_packet=handler)
     server.start()
     time.sleep(0.3)   # garante que o bind/listen completou
 
