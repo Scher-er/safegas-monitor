@@ -1,0 +1,18 @@
+# Arquivos gerados em runtime
+database/sql/safegas.db
+reports/latex/*.tex
+reports/charts/*.png
+reports/charts/*.pdf
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+.env
+.venv/
+venv/
+*.log
+
+# IDEs
+.vscode/
+.idea/
+*.code-workspace
