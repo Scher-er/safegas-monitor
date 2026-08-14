@@ -33,6 +33,12 @@ from central_command.server import ClientSession
 from database.nosql.mongo_repository import MongoTelemetryRepository
 from reports.latex.report_generator import LatexReportGenerator
 
+# Import opcional para evitar dependência circular se o TUI não for usado
+try:
+    from ui.tui.state import MonitorState
+except ImportError:
+    MonitorState = None
+
 log = logging.getLogger(__name__)
 
 
@@ -55,12 +61,14 @@ class PipelineHandler:
         filter_mode: FilterMode = "kalman",
         verbose_output: bool = True,
         enable_mongo: bool = True,
+        monitor_state: Optional['MonitorState'] = None,
     ):
         """
         Args:
             filter_mode:    modo do filtro ('moving_avg', 'kalman', 'both')
             verbose_output: se True, imprime resumo de cada pacote no terminal
             enable_mongo:   se False, desativa a persistência no MongoDB
+            monitor_state:  estado TUI compartilhado (opcional)
         """
         self._filter_pipeline = FilterPipeline(mode=filter_mode)
         self._lel_calculator  = LELCalculator()
@@ -68,6 +76,7 @@ class PipelineHandler:
         self._verbose         = verbose_output
         self._packets_processed = 0
         self._incidents_generated = 0
+        self._monitor_state = monitor_state
 
         # Etapa 6: Repositório MongoDB (modo degradado se indisponível)
         self._mongo = MongoTelemetryRepository() if enable_mongo else None
@@ -134,6 +143,10 @@ class PipelineHandler:
         if self._mongo:
             self._mongo.insert_reading(processed)
 
+        # ── Atualiza o estado da TUI (Etapa 8) ─────────────────────────────
+        if self._monitor_state:
+            self._monitor_state.update_from_reading(processed, lel_result)
+
         # ── Etapa 7: Laudo LaTeX se CRITICAL ──────────────────────────────
         if processed.alert_level == "CRITICAL":
             self._generate_report(processed, lel_result)
@@ -151,6 +164,17 @@ class PipelineHandler:
             # Persiste incidente no MongoDB (Etapa 6 + 7 integrado)
             if self._mongo and incident:
                 self._mongo.insert_incident(incident)
+
+            # Atualiza TUI (Etapa 8)
+            if self._monitor_state and incident:
+                self._monitor_state.add_incident(
+                    incident_id=incident.incident_id,
+                    device_id=incident.device_id,
+                    worker_id=incident.worker_id,
+                    peak_risk_ratio=incident.peak_risk_ratio,
+                    triggered_at=incident.triggered_at,
+                    latex_path=incident.latex_report_path,
+                )
 
         except Exception as e:
             # Não deixa falha no gerador derrubar o servidor
