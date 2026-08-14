@@ -70,6 +70,7 @@ MONGO_COLLECTION_INCIDENTS = "incidents"
 # ---------------------------------------------------------------------------
 # GERAÇÃO DE LAUDOS
 # ---------------------------------------------------------------------------
-REPORT_LOOKBACK_MINUTES = 15          # janela de dados para o laudo
+REPORT_LOOKBACK_MINUTES = 15          # janela de dados para o laudo (minutos)
+REPORT_HISTORY_SIZE     = 120         # tamanho do buffer de histórico por EPI (amostras)
 REPORTS_OUTPUT_DIR      = "reports/latex"
 CHARTS_OUTPUT_DIR       = "reports/charts"
