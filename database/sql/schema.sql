@@ -132,3 +132,7 @@ INSERT OR IGNORE INTO locations (location_id, name, area, city, risk_level, gas_
     ('LOC-001', 'Galeria Subterrânea Norte',  'Zona Industrial',  'São José dos Campos', 'HIGH',    'CH4,CO',     0),
     ('LOC-002', 'Câmara de Válvulas Sul',     'Zona Residencial', 'São José dos Campos', 'MEDIUM',  'CH4',        0),
     ('LOC-003', 'Subestação de Gás Centro',   'Centro',           'São José dos Campos', 'EXTREME', 'CH4,H2S,CO', 0);
+
+INSERT OR IGNORE INTO assignments (device_id, worker_id, location_id, active) VALUES
+    ('EPI-001', 'F-042', 'LOC-003', 1),
+    ('EPI-002', 'F-043', 'LOC-002', 1);

@@ -31,6 +31,7 @@ from central_command.lel.lel_calculator import LELCalculator
 from central_command.alerts.alert_manager import AlertManager
 from central_command.server import ClientSession
 from database.nosql.mongo_repository import MongoTelemetryRepository
+from database.sql.sqlite_repository import AssignmentRepository
 from reports.latex.report_generator import LatexReportGenerator
 
 # Import opcional para evitar dependência circular se o TUI não for usado
@@ -84,6 +85,10 @@ class PipelineHandler:
             log.info("Persistência MongoDB ativa.")
         else:
             log.info("Persistência MongoDB desativada (modo sem banco).")
+            
+        # Etapa 10: Repositório SQLite para metadados (cache em memória)
+        self._sqlite = AssignmentRepository()
+        self._metadata_cache = {}
 
         # Etapa 7: Gerador de laudos LaTeX
         self._report_generator = LatexReportGenerator(compile_pdf=True)
@@ -143,6 +148,31 @@ class PipelineHandler:
         if self._mongo:
             self._mongo.insert_reading(processed)
 
+        # ── Etapa 10: Enriquecimento com SQLite ──────────────────────────────
+        dev = processed.device_id
+        if dev not in self._metadata_cache:
+            assignment = self._sqlite.get_by_device(dev)
+            if assignment:
+                is_calib = assignment.get("device_status", "ACTIVE") == "ACTIVE"
+                self._metadata_cache[dev] = {
+                    "worker_name": assignment.get("full_name", packet.worker_id),
+                    "location_name": assignment.get("location_name", packet.location_id),
+                    "is_calibrated": is_calib
+                }
+                if not is_calib:
+                    log.warning(f"EPI {dev} com calibração pendente ou status irregular!")
+            else:
+                self._metadata_cache[dev] = {
+                    "worker_name": packet.worker_id,
+                    "location_name": packet.location_id,
+                    "is_calibrated": True
+                }
+                log.warning(f"EPI {dev} não possui atribuição ativa no SQLite!")
+                
+        meta = self._metadata_cache[dev]
+        processed.worker_id = meta["worker_name"]
+        processed.location_id = meta["location_name"]
+        
         # ── Atualiza o estado da TUI (Etapa 8) ─────────────────────────────
         if self._monitor_state:
             self._monitor_state.update_from_reading(processed, lel_result)
