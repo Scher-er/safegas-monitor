@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeGas Monitor - Web Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <h1>SafeGas Monitor</h1>
+        </div>
+        <div class="stats-container">
+            <div class="stat-badge">
+                <span class="stat-label">Uptime</span>
+                <span class="stat-value" id="val-uptime">00:00:00</span>
+            </div>
+            <div class="stat-badge">
+                <span class="stat-label">EPIs Ativos</span>
+                <span class="stat-value" id="val-devices">0</span>
+            </div>
+            <div class="stat-badge">
+                <span class="stat-label">Pct/s</span>
+                <span class="stat-value" id="val-pps">0.0</span>
+            </div>
+            <div class="stat-badge danger">
+                <span class="stat-label">Laudos Gerados</span>
+                <span class="stat-value" id="val-incidents">0</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard">
+        <!-- Devices Section -->
+        <section class="panel devices-panel">
+            <h2>EPIs em Monitoramento</h2>
+            <div class="table-responsive">
+                <table id="devices-table">
+                    <thead>
+                        <tr>
+                            <th>Última Leitura</th>
+                            <th>ID EPI</th>
+                            <th>Funcionário</th>
+                            <th>Risco R (%)</th>
+                            <th>Nível de Alerta</th>
+                            <th>T (°C)</th>
+                            <th>Pacotes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="devices-body">
+                        <!-- Content injected by JS -->
+                        <tr><td colspan="7" class="text-center text-muted">Aguardando dados...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Right Column (History & Incidents) -->
+        <div class="right-column">
+            <section class="panel history-panel">
+                <h2>Histórico de Eventos Recentes</h2>
+                <div class="table-responsive">
+                    <table id="history-table">
+                        <thead>
+                            <tr>
+                                <th>Hora</th>
+                                <th>EPI</th>
+                                <th>Evento</th>
+                                <th>Risco</th>
+                                <th>Gases</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-body">
+                            <!-- Content injected by JS -->
+                            <tr><td colspan="5" class="text-center text-muted">Nenhum evento detectado</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel incidents-panel">
+                <h2>Incidentes Críticos Registrados</h2>
+                <div class="table-responsive">
+                    <table id="incidents-table">
+                        <thead>
+                            <tr>
+                                <th>Hora</th>
+                                <th>Incidente ID</th>
+                                <th>EPI</th>
+                                <th>Pico de Risco</th>
+                                <th>Laudo Gerado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="incidents-body">
+                            <!-- Content injected by JS -->
+                            <tr><td colspan="5" class="text-center text-muted">Nenhum incidente crítico</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

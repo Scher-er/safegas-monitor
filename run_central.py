@@ -21,6 +21,7 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 )
 
+import uvicorn
 from rich.live import Live
 
 from config.settings import SOCKET_HOST, SOCKET_PORT
@@ -28,6 +29,7 @@ from central_command.server import CentralCommandServer
 from central_command.pipeline_handler import PipelineHandler
 from ui.tui.state import MonitorState
 from ui.tui.layout import TuiBuilder
+from api.server import app as fast_app, init_api
 
 
 def main():
@@ -56,7 +58,16 @@ def main():
     server_thread = threading.Thread(target=server.start, daemon=True)
     server_thread.start()
     
-    # 5. Inicia a interface Rich (TUI) na thread principal
+    # 5. Inicializa a API Web (Etapa 9)
+    init_api(state)
+    def run_uvicorn():
+        # Desativa os logs do uvicorn para não poluir o TUI
+        uvicorn.run(fast_app, host="127.0.0.1", port=8000, log_level="critical")
+        
+    api_thread = threading.Thread(target=run_uvicorn, daemon=True)
+    api_thread.start()
+    
+    # 6. Inicia a interface Rich (TUI) na thread principal
     builder = TuiBuilder(state)
     
     try:
@@ -69,7 +80,7 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
-        print("\nDesligando servidor...")
+        print("\nDesligando servidores...")
         server.stop()
         server_thread.join(timeout=2.0)
         print("Central de Comando encerrada.")
