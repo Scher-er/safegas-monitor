@@ -192,7 +192,7 @@ def _build_latex(
 % Pacotes essenciais
 \usepackage[utf8]{{inputenc}}
 \usepackage[T1]{{fontenc}}
-\usepackage[brazil]{{babel}}
+\usepackage[brazilian]{{babel}}
 \usepackage{{geometry}}
 \usepackage{{booktabs}}
 \usepackage{{longtable}}
@@ -201,10 +201,7 @@ def _build_latex(
 \usepackage{{xcolor}}
 \usepackage{{amsmath}}
 \usepackage{{fancyhdr}}
-\usepackage{{hyperref}}
-\usepackage{{microtype}}
 \usepackage{{array}}
-\usepackage{{colortbl}}
 
 \geometry{{
     a4paper,
@@ -215,18 +212,11 @@ def _build_latex(
 % Cabeçalho e rodapé
 \pagestyle{{fancy}}
 \fancyhf{{}}
+\setlength{{\headheight}}{{14pt}}
 \fancyhead[L]{{\small\textbf{{SafeGas Monitor}} --- Laudo Técnico de Incidente}}
 \fancyhead[R]{{\small ID: {_latex_escape(incident_id[:8])}...}}
 \fancyfoot[C]{{\small P\'agina \thepage}}
 \fancyfoot[R]{{\small Gerado em: {_latex_escape(generated_at[:19])}}}
-
-\hypersetup{{
-    colorlinks=true,
-    linkcolor=blue,
-    urlcolor=blue,
-    pdftitle={{SafeGas Monitor - Laudo de Incidente}},
-    pdfauthor={{SafeGas Monitor System}},
-}}
 
 \definecolor{{alertred}}{{RGB}}{{192,57,43}}
 \definecolor{{alertorange}}{{RGB}}{{230,126,34}}
@@ -256,7 +246,6 @@ def _build_latex(
 
 \begin{{table}}[H]
 \centering
-\rowcolors{{2}}{{lightgray}}{{white}}
 \begin{{tabular}}{{>{{\ }}l<{{\ }} >{{\ }}l<{{\ }}}}
     \toprule
     \textbf{{Campo}} & \textbf{{Valor}} \\
@@ -281,7 +270,6 @@ def _build_latex(
 
 \begin{{table}}[H]
 \centering
-\rowcolors{{2}}{{lightgray}}{{white}}
 \begin{{tabular}}{{llrrrr}}
     \toprule
     \textbf{{ID}} & \textbf{{G\'as}} & \textbf{{LEL (\%)}} &
@@ -489,9 +477,9 @@ class LatexReportGenerator:
         print(f"\n  >> Laudo LaTeX gerado: {tex_path}")
 
         # 4. Compila com pdflatex (opcional)
-        pdf_path = tex_path.replace(".tex", ".pdf")
+        final_path = tex_path
         if self._compile_pdf:
-            pdf_path = self._compile(tex_path) or tex_path
+            final_path = self._compile(tex_path) or tex_path
 
         # 5. IncidentRecord
         incident = IncidentRecord(
@@ -501,7 +489,7 @@ class LatexReportGenerator:
             worker_id=processed.worker_id,
             location_id=processed.location_id,
             peak_risk_ratio=processed.risk_ratio_percent,
-            latex_report_path=tex_path,
+            latex_report_path=final_path,
         )
         return incident
 
@@ -514,17 +502,35 @@ class LatexReportGenerator:
         Returns:
             Caminho do .pdf gerado, ou None se falhou.
         """
+        import shutil
+        pdflatex_bin = shutil.which("pdflatex")
+        if not pdflatex_bin:
+            candidates = [
+                os.path.expandvars(r"%LOCALAPPDATA%\Programs\MiKTeX\miktex\bin\x64\pdflatex.exe"),
+                r"C:\Program Files\MiKTeX\miktex\bin\x64\pdflatex.exe",
+                r"C:\Program Files (x86)\MiKTeX\miktex\bin\pdflatex.exe",
+            ]
+            for c in candidates:
+                if os.path.exists(c):
+                    pdflatex_bin = c
+                    break
+
+        if not pdflatex_bin:
+            log.info("pdflatex não encontrado — laudo disponível como .tex.")
+            print("  >> pdflatex não instalado. Compile o .tex manualmente.")
+            return None
+
         try:
             result = subprocess.run(
                 [
-                    "pdflatex",
+                    pdflatex_bin,
                     "-interaction=nonstopmode",
                     "-output-directory", os.path.dirname(tex_path),
                     tex_path,
                 ],
                 capture_output=True,
                 text=True,
-                timeout=30,
+                timeout=45,
             )
             pdf_path = tex_path.replace(".tex", ".pdf")
             if result.returncode == 0 and os.path.exists(pdf_path):
@@ -532,9 +538,10 @@ class LatexReportGenerator:
                 print(f"  >> PDF compilado: {pdf_path}")
                 return pdf_path
             else:
+                err_snippet = result.stdout[-300:] if result.stdout else ""
                 log.warning(
-                    "pdflatex retornou código %d. Laudo disponível como .tex.",
-                    result.returncode,
+                    "pdflatex retornou código %d (%s). Laudo disponível como .tex.",
+                    result.returncode, err_snippet.strip()
                 )
                 return None
         except FileNotFoundError:
