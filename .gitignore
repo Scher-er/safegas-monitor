@@ -1,8 +1,15 @@
 # Arquivos gerados em runtime
 database/sql/safegas.db
+database/sql/*.db-shm
+database/sql/*.db-wal
 reports/latex/*.tex
+reports/latex/*.pdf
+reports/latex/*.aux
+reports/latex/*.log
+reports/latex/test_clean.*
 reports/charts/*.png
 reports/charts/*.pdf
+reports/emails/
 __pycache__/
 **/__pycache__/
 *.pyc
@@ -12,7 +19,13 @@ __pycache__/
 venv/
 *.log
 
+# Scripts auxiliares temporarios
+clean_docx*.py
+edit_docx*.py
+template.txt
+
 # IDEs
 .vscode/
 .idea/
 *.code-workspace
+config/secrets.py

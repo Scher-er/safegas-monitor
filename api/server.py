@@ -1,54 +1,30 @@
-"""
-SafeGas Monitor — Web API e Dashboard (FastAPI) — Etapa 9
-=========================================================
-Fornece uma API REST para consultar o estado atual dos EPIs, histórico e incidentes,
-e serve a interface web (Dashboard) via arquivos estáticos.
-"""
-
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
+from flask import Flask, jsonify, send_from_directory
 from typing import Dict, Any
 
 from ui.tui.state import MonitorState
 
-app = FastAPI(title="SafeGas Monitor API", version="1.0")
+app = Flask(__name__, static_folder="static")
 
-# Permitir CORS para desenvolvimento local se necessário
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# O estado será injetado pelo run_central.py
 _monitor_state: MonitorState = None
 
 def init_api(state: MonitorState):
-    """Inicializa a API associando o estado compartilhado da Central."""
     global _monitor_state
     _monitor_state = state
 
-# ── Endpoints da API ────────────────────────────────────────────────────────
-
-@app.get("/api/stats")
-def get_stats() -> Dict[str, Any]:
-    """Retorna estatísticas globais da Central."""
+@app.route("/api/stats", methods=["GET"])
+def get_stats():
     if not _monitor_state:
-        return {}
-    return _monitor_state.stats
+        return jsonify({})
+    return jsonify(_monitor_state.stats)
 
-@app.get("/api/devices")
-def get_devices() -> list[Dict[str, Any]]:
-    """Retorna a lista de dispositivos ativos e seu status."""
+@app.route("/api/devices", methods=["GET"])
+def get_devices():
     if not _monitor_state:
-        return []
-    
-    return [
+        return jsonify([])
+    return jsonify([
         {
             "device_id": d.device_id,
             "worker_id": d.worker_id,
@@ -60,15 +36,13 @@ def get_devices() -> list[Dict[str, Any]]:
             "packets": d.packets_received
         }
         for d in _monitor_state.devices
-    ]
+    ])
 
-@app.get("/api/history")
-def get_history() -> list[Dict[str, Any]]:
-    """Retorna o histórico recente de eventos anormais."""
+@app.route("/api/history", methods=["GET"])
+def get_history():
     if not _monitor_state:
-        return []
-    
-    return [
+        return jsonify([])
+    return jsonify([
         {
             "timestamp": e.ts_short,
             "device_id": e.device_id,
@@ -77,15 +51,13 @@ def get_history() -> list[Dict[str, Any]]:
             "gases": e.gases
         }
         for e in _monitor_state.alert_history
-    ]
+    ])
 
-@app.get("/api/incidents")
-def get_incidents() -> list[Dict[str, Any]]:
-    """Retorna os incidentes críticos (com laudo)."""
+@app.route("/api/incidents", methods=["GET"])
+def get_incidents():
     if not _monitor_state:
-        return []
-    
-    return [
+        return jsonify([])
+    return jsonify([
         {
             "timestamp": i.ts_short,
             "incident_id": i.incident_id[:8],
@@ -94,11 +66,13 @@ def get_incidents() -> list[Dict[str, Any]]:
             "latex_path": i.latex_path
         }
         for i in _monitor_state.incidents
-    ]
+    ])
 
+# Servir frontend estatico no `/`
+@app.route("/")
+def index():
+    return send_from_directory(app.static_folder, "index.html")
 
-# ── Arquivos Estáticos ──────────────────────────────────────────────────────
-# Monta a pasta 'api/static' para servir o frontend no endpoint '/'
-static_path = os.path.join(os.path.dirname(__file__), "static")
-os.makedirs(static_path, exist_ok=True)
-app.mount("/", StaticFiles(directory=static_path, html=True), name="static")
+@app.route("/<path:path>")
+def static_files(path):
+    return send_from_directory(app.static_folder, path)

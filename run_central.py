@@ -1,19 +1,10 @@
-"""
-SafeGas Monitor — Central de Comando (App Principal)
-====================================================
-Inicializa o servidor TCP para escutar os EPIs, o pipeline de
-processamento (Filtros → LEL → Alertas → MongoDB → LaTeX) e
-renderiza a interface gráfica no terminal (TUI) em tempo real.
-"""
-
 import sys
 import os
 import time
 import logging
 import threading
+import subprocess
 
-# Configura o logger para ignorar stdout e gravar apenas em arquivo,
-# evitando que os logs "sujem" a interface do Rich.
 os.makedirs("logs", exist_ok=True)
 logging.basicConfig(
     filename="logs/central.log",
@@ -21,25 +12,45 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 )
 
-import uvicorn
 from rich.live import Live
 
-from config.settings import SOCKET_HOST, SOCKET_PORT
 from central_command.server import CentralCommandServer
 from central_command.pipeline_handler import PipelineHandler
 from ui.tui.state import MonitorState
 from ui.tui.layout import TuiBuilder
-from api.server import app as fast_app, init_api
 
+# Import Flask app
+from api.server import app as flask_app, init_api
+
+def run_flask_app():
+    # Usando Werkzeug Server embutido para ambiente de dev local. Desativar debug log
+    import logging
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR)
+    flask_app.run(host="127.0.0.1", port=8000, use_reloader=False)
 
 def main():
-    print("Iniciando SafeGas Monitor - Central de Comando...")
+    print("Iniciando SafeGas Monitor - Central de Comando (MQTT + Flask)...")
     
-    # 1. Cria o estado compartilhado da TUI
+    # 1. Iniciar Broker MQTT no background sem poluir o terminal
+    print("Iniciando Broker MQTT Local em background...")
+    broker_proc = subprocess.Popen(
+        [sys.executable, "mqtt_broker.py"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL
+    )
+    time.sleep(2) # Aguarda o broker subir
+    
+    # 2. Iniciar EPI Simulador no background
+    print("Iniciando Simulador de EPI em background...")
+    epi_proc = subprocess.Popen(
+        [sys.executable, "-m", "epi_simulator.client"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL
+    )
+    
     state = MonitorState()
     
-    # 2. Inicializa o Pipeline (Etapas 4-7) acoplado ao estado
-    # verbose=False para não conflitar com a TUI no terminal
     handler = PipelineHandler(
         filter_mode="kalman",
         verbose_output=False,
@@ -47,34 +58,27 @@ def main():
         monitor_state=state,
     )
     
-    # 3. Inicializa o servidor TCP (Etapa 3)
+    # MQTT usa porta 1883 por padrao
     server = CentralCommandServer(
-        host=SOCKET_HOST,
-        port=SOCKET_PORT,
+        host="127.0.0.1",
+        port=1883,
         on_packet=handler,
     )
     
-    # 4. Inicia o servidor em uma thread separada (daemon)
-    server_thread = threading.Thread(target=server.start, daemon=True)
-    server_thread.start()
+    # Start MQTT Subscriber
+    server.start()
     
-    # 5. Inicializa a API Web (Etapa 9)
+    # Inicia a API Web (Flask)
     init_api(state)
-    def run_uvicorn():
-        # Desativa os logs do uvicorn para não poluir o TUI
-        uvicorn.run(fast_app, host="127.0.0.1", port=8000, log_level="critical")
-        
-    api_thread = threading.Thread(target=run_uvicorn, daemon=True)
+    api_thread = threading.Thread(target=run_flask_app, daemon=True)
     api_thread.start()
     
-    # 6. Inicia a interface Rich (TUI) na thread principal
+    # Inicia a interface Rich (TUI)
     builder = TuiBuilder(state)
     
     try:
-        # refresh_per_second=4 oferece uma boa responsividade sem consumir muita CPU
         with Live(builder.build_layout(), refresh_per_second=4, screen=True) as live:
             while True:
-                # Atualiza o layout a cada frame
                 live.update(builder.build_layout())
                 time.sleep(0.25)
     except KeyboardInterrupt:
@@ -82,8 +86,15 @@ def main():
     finally:
         print("\nDesligando servidores...")
         server.stop()
-        server_thread.join(timeout=2.0)
-        print("Central de Comando encerrada.")
+        
+        # Encerra processos filhos de forma limpa
+        try:
+            broker_proc.terminate()
+            epi_proc.terminate()
+        except:
+            pass
+            
+        print("Central de Comando encerrada e memÃ³ria liberada.")
 
 
 if __name__ == "__main__":

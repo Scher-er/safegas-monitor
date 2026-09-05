@@ -33,6 +33,7 @@ from central_command.server import ClientSession
 from database.nosql.mongo_repository import MongoTelemetryRepository
 from database.sql.sqlite_repository import AssignmentRepository
 from reports.latex.report_generator import LatexReportGenerator
+from central_command.notifier import EmergencyNotifier
 
 # Import opcional para evitar dependência circular se o TUI não for usado
 try:
@@ -74,6 +75,10 @@ class PipelineHandler:
         self._filter_pipeline = FilterPipeline(mode=filter_mode)
         self._lel_calculator  = LELCalculator()
         self._alert_manager   = AlertManager()
+        self._notifier        = EmergencyNotifier(
+            webhook_url="https://webhook.site/safegas-mock-endpoint",
+            dest_email="gabriellftavares@gmail.com"
+        )
         self._verbose         = verbose_output
         self._packets_processed = 0
         self._incidents_generated = 0
@@ -179,7 +184,18 @@ class PipelineHandler:
 
         # ── Etapa 7: Laudo LaTeX se CRITICAL ──────────────────────────────
         if processed.alert_level == "CRITICAL":
-            self._generate_report(processed, lel_result)
+            incident = self._generate_report(processed, lel_result)
+            
+            # Etapa 11: Notificacao Externa
+            if hasattr(self, '_notifier'):
+                self._notifier.notify_critical_incident(
+                    device_id=processed.device_id,
+                    worker_id=processed.worker_id,
+                    location=processed.location_id,
+                    risk_ratio=lel_result.risk_ratio_percent,
+                    details=f"Mistura LEL: {lel_result.lel_mix_percent:.2f}%",
+                    attachment_path=incident.latex_report_path if incident else None
+                )
 
         return processed
 
@@ -205,10 +221,13 @@ class PipelineHandler:
                     triggered_at=incident.triggered_at,
                     latex_path=incident.latex_report_path,
                 )
+                
+            return incident
 
         except Exception as e:
             # Não deixa falha no gerador derrubar o servidor
             log.error("Erro ao gerar laudo LaTeX: %s", e, exc_info=True)
+            return None
 
     # ------------------------------------------------------------------
     def _print_summary(self, packet, processed, lel_result):
