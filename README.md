@@ -1,4 +1,4 @@
-# SafeGas Monitor 🛢️🔥
+# SafeGas Monitor
 
 > **Disciplina:** Projetos em Engenharia de Software / Engenharia da Computação — UNIVAP 2026  
 > **Objetivo:** Sistema integrado de software para monitoramento em tempo real de atmosferas industriais potencialmente explosivas (LEL/LIE) através de múltiplos EPIs (Equipamentos de Proteção Individual) portáteis inteligentes.
@@ -13,7 +13,7 @@
 
 ---
 
-## 📑 Sumário
+##  Sumário
 
 - [Visão Geral](#-visão-geral)
 - [Arquitetura do Sistema](#️-arquitetura-do-sistema)
@@ -38,13 +38,13 @@
 
 ---
 
-## 🎯 Visão Geral
+##  Visão Geral
 
 O **SafeGas Monitor** é uma plataforma que atua como **Central de Comando Industrial** conectada a múltiplos detectores multigás de EPI portáteis via rede sem fio IoT (protocolo MQTT). O sistema recebe telemetria contínua, filtra sinais ruidosos em tempo real com **Filtro de Kalman**, calcula o risco explosivo composto (\(LEL_{\text{mix}}\)) sob a **Lei de Le Chatelier** com compensação de temperatura de **Zabetakis**, gerencia cadastros institucionais de funcionários e áreas de risco em banco relacional **SQLite**, persiste telemetria histórica em **MongoDB**, e gera laudos periciais automáticos compilados em **PDF via LaTeX**, disparando notificações por e-mail via **SMTP** em caso de emergência crítica.
 
 ---
 
-## 🏗️ Arquitetura do Sistema
+##  Arquitetura do Sistema
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -85,7 +85,7 @@ O **SafeGas Monitor** é uma plataforma que atua como **Central de Comando Indus
 
 ---
 
-## 📦 Stack Tecnológica
+## Stack Tecnológica
 
 | Componente | Tecnologia | Finalidade no Projeto |
 |---|---|---|
@@ -116,7 +116,7 @@ Os limites inferiores (*LEL*) e superiores (*UEL*) de inflamabilidade são defin
 
 ---
 
-## ⚠️ Classificação de Risco e Limiares de Alerta
+## Classificação de Risco e Limiares de Alerta
 
 A Central avalia a taxa de risco composta:
 $$R = \left( \frac{C_{\text{mix}}}{LEL_{\text{mix}}} \right) \times 100\%$$
@@ -130,7 +130,7 @@ $$R = \left( \frac{C_{\text{mix}}}{LEL_{\text{mix}}} \right) \times 100\%$$
 
 ---
 
-## 🔢 Modelagem Matemática e Física
+## Modelagem Matemática e Física
 
 ### Equação de Le Chatelier (LEL de Misturas)
 Para uma mistura gasosa contendo $n$ gases combustíveis em concentrações relativas $C_i$:
@@ -163,7 +163,7 @@ Para superar simulações lineares artificiais, o módulo `epi_simulator` implem
 
 ---
 
-## 🖥️ Interfaces de Usuário
+## Interfaces de Usuário
 
 ### 1. Web Dashboard em Tempo Real (Flask + Chart.js)
 Disponível em `http://localhost:8000`:
@@ -188,7 +188,7 @@ Executado diretamente no console onde a Central é iniciada:
 
 ---
 
-## 🚀 Como Executar
+## Como Executar
 
 ### Pré-requisitos
 * **Python 3.11+** instalado e adicionado ao `PATH`.
@@ -233,7 +233,7 @@ Em seguida, acesse no navegador: [http://localhost:8000](http://localhost:8000)
 
 ---
 
-## 🧪 Testes Automatizados
+##  Testes Automatizados
 
 O projeto conta com baterias de testes unitários e de integração organizados por etapa de desenvolvimento:
 
@@ -265,7 +265,7 @@ python -m epi_simulator.simulator
 
 ---
 
-## 📁 Estrutura do Repositório
+##  Estrutura do Repositório
 
 ```
 SafeGasMonitor/
@@ -323,7 +323,7 @@ SafeGasMonitor/
 
 ---
 
-## 🔒 Segurança e Resiliência
+## Segurança e Resiliência
 
 * **Proteção de Segredos (`.gitignore`)**:
   * Arquivos como `config/secrets.py`, bancos locais com dados de sessão e artefatos de compilação transitórios estão isolados do controle de versão.
