@@ -1,11 +1,11 @@
-# SafeGas Monitor 🛢️🔥
+# SafeGas Monitor 
 
 > **Disciplina:** Projetos em Engenharia da Computação I — UNIVAP 2026  
 > **Objetivo:** Simular um EPI (Equipamento de Proteção Individual) sensor de gases portátil para ambientes de risco de vazamento, cobrindo toda a camada de software que sustentará o hardware real desenvolvido em Projetos II.
 
 ---
 
-## 🏗️ Arquitetura
+##  Arquitetura
 
 ```
 EPI Simulado ──(Socket TCP)──► Central de Comando ──► MongoDB (telemetria)
@@ -14,7 +14,7 @@ EPI Simulado ──(Socket TCP)──► Central de Comando ──► MongoDB (t
                                 └─ Alertas escalonados
 ```
 
-## 📦 Stack
+##  Stack
 
 | Componente | Tecnologia |
 |---|---|
@@ -26,7 +26,7 @@ EPI Simulado ──(Socket TCP)──► Central de Comando ──► MongoDB (t
 | Visualização | Matplotlib |
 | Laudos | LaTeX + Jinja2 |
 
-## 🚀 Como executar
+##  Como executar
 
 ```bash
 # 1. Instalar dependências
@@ -42,7 +42,7 @@ python main.py server
 python main.py client
 ```
 
-## 🧪 Testes
+##  Testes
 
 ```bash
 # Etapa 1 — Sanidade de arquitetura
@@ -55,7 +55,7 @@ python tests/test_etapa2.py
 python -m epi_simulator.simulator
 ```
 
-## 📁 Estrutura
+##  Estrutura
 
 ```
 SafeGasMonitor/
@@ -67,7 +67,7 @@ SafeGasMonitor/
 └── tests/              # Testes por etapa
 ```
 
-## 📊 Gases Monitorados
+##  Gases Monitorados
 
 | Gás | LEL (%) | UEL (%) |
 |---|---|---|
@@ -77,7 +77,7 @@ SafeGasMonitor/
 | C₃H₈ — Propano | 2.1 | 9.5 |
 | C₄H₁₀ — Butano | 1.8 | 8.4 |
 
-## ⚠️ Limiares de Alerta
+##  Limiares de Alerta
 
 | Nível | % do LEL_mix | Ação |
 |---|---|---|
@@ -86,7 +86,7 @@ SafeGasMonitor/
 | WARNING | 25–50% | Alerta ao supervisor |
 | **CRITICAL** | **≥ 50%** | **🚨 Notificação Bombeiros + Laudo LaTeX** |
 
-## 🔢 Equação de Le Chatelier (LEL de misturas)
+## Equação de Le Chatelier (LEL de misturas)
 
 $$LEL_{mix} = \frac{100}{\sum_{i=1}^{n} \frac{C_i}{LEL_i}}$$
 
