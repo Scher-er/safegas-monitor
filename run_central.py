@@ -41,13 +41,12 @@ def main():
     )
     time.sleep(2) # Aguarda o broker subir
     
-    # 2. Iniciar EPI Simulador no background
-    print("Iniciando Simulador de EPI em background...")
-    epi_proc = subprocess.Popen(
-        [sys.executable, "-m", "epi_simulator.client"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL
-    )
+    # 2. Iniciar SimulationManager (multi-EPI) com os dispositivos ativos do SQLite
+    print("Iniciando Simulador Multi-EPI (SimulationManager)...")
+    from epi_simulator.client import SimulationManager
+    sim_manager = SimulationManager(host="127.0.0.1", port=1883)
+    sim_manager.start()
+    sim_manager.load_from_sqlite()
     
     state = MonitorState()
     
@@ -68,8 +67,8 @@ def main():
     # Start MQTT Subscriber
     server.start()
     
-    # Inicia a API Web (Flask)
-    init_api(state)
+    # Inicia a API Web (Flask) integrada ao SimulationManager
+    init_api(state, handler=handler, sim_manager=sim_manager)
     api_thread = threading.Thread(target=run_flask_app, daemon=True)
     api_thread.start()
     
@@ -85,16 +84,16 @@ def main():
         pass
     finally:
         print("\nDesligando servidores...")
+        sim_manager.stop()
         server.stop()
         
-        # Encerra processos filhos de forma limpa
+        # Encerra broker de forma limpa
         try:
             broker_proc.terminate()
-            epi_proc.terminate()
         except:
             pass
             
-        print("Central de Comando encerrada e memÃ³ria liberada.")
+        print("Central de Comando encerrada e memória liberada.")
 
 
 if __name__ == "__main__":

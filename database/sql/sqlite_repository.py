@@ -128,6 +128,27 @@ class SQLiteRepository:
             log.error("SQLite rollback: %s", e)
             raise
 
+    def _ensure_settings_table(self) -> None:
+        self._conn.execute(
+            "CREATE TABLE IF NOT EXISTS system_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)"
+        )
+
+    def get_setting(self, key: str, default: Optional[str] = None) -> Optional[str]:
+        self._ensure_settings_table()
+        row = self._conn.execute(
+            "SELECT value FROM system_settings WHERE key = ?", (key,)
+        ).fetchone()
+        return row["value"] if row else default
+
+    def set_setting(self, key: str, value: str) -> None:
+        self._ensure_settings_table()
+        with self._tx():
+            self._conn.execute(
+                "INSERT INTO system_settings (key, value) VALUES (?, ?) "
+                "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                (key, value),
+            )
+
     def close(self) -> None:
         if self._conn:
             self._conn.close()
@@ -338,6 +359,20 @@ class LocationRepository(SQLiteRepository):
             for r in rows
         ]
 
+    def list_all(self) -> list[LocationRecord]:
+        rows = self._conn.execute(
+            "SELECT * FROM locations ORDER BY name"
+        ).fetchall()
+        return [
+            LocationRecord(
+                location_id=r["location_id"], name=r["name"],
+                area=r["area"], city=r["city"],
+                risk_level=r["risk_level"], gas_hazards=r["gas_hazards"],
+                ventilated=r["ventilated"], notes=r["notes"],
+            )
+            for r in rows
+        ]
+
 
 # ─── AssignmentRepository ─────────────────────────────────────────────────────
 
@@ -359,6 +394,24 @@ class AssignmentRepository(SQLiteRepository):
             "Atribuição criada: #%d (%s → %s)",
             assignment_id, assignment.device_id, assignment.worker_id,
         )
+        return assignment_id
+
+    def assign_device(self, device_id: str, worker_id: str, location_id: Optional[str] = None) -> int:
+        """Encerra atribuições ativas anteriores deste EPI e cria uma nova."""
+        now = datetime.now(timezone.utc).isoformat()
+        with self._tx():
+            self._conn.execute(
+                "UPDATE assignments SET active = 0, returned_at = ? WHERE device_id = ? AND active = 1",
+                (now, device_id),
+            )
+            cursor = self._conn.execute(
+                """INSERT INTO assignments
+                   (device_id, worker_id, location_id, assigned_at, active)
+                   VALUES (?, ?, ?, ?, 1)""",
+                (device_id, worker_id, location_id, now),
+            )
+        assignment_id = cursor.lastrowid
+        log.info("EPI %s atribuído a %s no local %s", device_id, worker_id, location_id)
         return assignment_id
 
     def return_device(self, assignment_id: int) -> bool:

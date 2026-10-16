@@ -5,8 +5,8 @@ echo         INICIANDO SAFEGAS MONITOR (MQTT + Flask)
 echo ==================================================
 echo.
 
-REM Caminho fixo para a pasta do projeto
-cd /d "C:\Users\scher\OneDrive(OG)\Desktop\Universidade\Projeto em Engenharia de Software\SafeGasMonitor"
+REM Garante a execução a partir do diretório onde o script está localizado
+cd /d "%~dp0"
 
 echo Abrindo o Web Dashboard no navegador padrao...
 start http://localhost:8000

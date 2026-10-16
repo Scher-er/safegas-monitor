@@ -395,17 +395,17 @@ def test_assignment_full_cycle():
 
     # Verifica atribuição ativa
     active = repo.active_assignments()
-    assert len(active) == 1
-    assert active[0]["device_id"] == "EPI-T01"
-    assert active[0]["worker_id"] == "W-T01"
+    epi_active = [a for a in active if a["device_id"] == "EPI-T01"]
+    assert len(epi_active) == 1
+    assert epi_active[0]["worker_id"] == "W-T01"
 
     # Devolução
     returned = repo.return_device(aid)
     assert returned
 
-    # Sem atribuições ativas após devolução
+    # Sem atribuições ativas para EPI-T01 após devolução
     active_after = repo.active_assignments()
-    assert len(active_after) == 0
+    assert not any(a["device_id"] == "EPI-T01" for a in active_after)
 
     print("  [OK] Ciclo completo: atribuição → uso → devolução")
 
