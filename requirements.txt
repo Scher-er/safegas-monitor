@@ -1,9 +1,23 @@
-numpy>=1.26.0
-pymongo>=4.6.0
-matplotlib>=3.8.0
-python-dotenv>=1.0.0
-# sqlite3 já vem na stdlib do Python, não precisa instalar
+# SafeGas Monitor — Dependências do Projeto
+# ==========================================
 
-# Etapas futuras (adicionar conforme avançar):
-# pillow>=10.0.0          # manipulação de imagens nos laudos (Etapa 7)
-# jinja2>=3.1.0           # templates LaTeX (Etapa 7)
+# Núcleo científico e estatístico
+numpy>=1.26.0
+matplotlib>=3.8.0
+
+# Mensageria e Comunicação IoT (MQTT)
+paho-mqtt>=2.0.0
+amqtt>=0.11.0
+
+# Servidor Web & Interface Dashboard
+flask>=3.0.0
+rich>=13.0.0
+
+# Banco de Dados NoSQL
+pymongo>=4.6.0
+# Nota: SQLite 3 faz parte da biblioteca padrão do Python (stdlib)
+
+# Laudos Técnicos & Notificações
+jinja2>=3.1.0
+requests>=2.31.0
+python-dotenv>=1.0.0

@@ -75,9 +75,16 @@ class PipelineHandler:
         self._filter_pipeline = FilterPipeline(mode=filter_mode)
         self._lel_calculator  = LELCalculator()
         self._alert_manager   = AlertManager()
+        # Etapa 10: Repositório SQLite para metadados (cache em memória)
+        self._sqlite = AssignmentRepository()
+        self._metadata_cache = {}
+
+        # Carrega o e-mail de alerta configurado no SQLite (ou usa o padrão)
+        initial_email = self._sqlite.get_setting("alert_dest_email", "gabriellftavares@gmail.com")
+
         self._notifier        = EmergencyNotifier(
             webhook_url="https://webhook.site/safegas-mock-endpoint",
-            dest_email="gabriellftavares@gmail.com"
+            dest_email=initial_email
         )
         self._verbose         = verbose_output
         self._packets_processed = 0
@@ -90,10 +97,6 @@ class PipelineHandler:
             log.info("Persistência MongoDB ativa.")
         else:
             log.info("Persistência MongoDB desativada (modo sem banco).")
-            
-        # Etapa 10: Repositório SQLite para metadados (cache em memória)
-        self._sqlite = AssignmentRepository()
-        self._metadata_cache = {}
 
         # Etapa 7: Gerador de laudos LaTeX
         self._report_generator = LatexReportGenerator(compile_pdf=True)
@@ -277,6 +280,26 @@ class PipelineHandler:
     def set_warning_callback(self, callback) -> None:
         """Define o callback para eventos WARNING."""
         self._alert_manager.on_warning = callback
+
+    def set_dest_email(self, new_email: str) -> str:
+        """Atualiza o e-mail de emergência e persiste no SQLite."""
+        self._sqlite.set_setting("alert_dest_email", new_email)
+        if hasattr(self, "_notifier") and self._notifier:
+            self._notifier.dest_email = new_email
+        log.info("E-mail de alerta SafeGas atualizado para: %s", new_email)
+        return new_email
+
+    @property
+    def dest_email(self) -> str:
+        """Retorna o e-mail de emergência atual."""
+        if hasattr(self, "_notifier") and self._notifier:
+            return self._notifier.dest_email
+        return self._sqlite.get_setting("alert_dest_email", "gabriellftavares@gmail.com")
+
+    def invalidate_device_cache(self, device_id: str) -> None:
+        """Invalida o cache de metadados para forçar recarregamento do SQLite."""
+        if device_id in self._metadata_cache:
+            del self._metadata_cache[device_id]
 
     def __repr__(self) -> str:
         return (

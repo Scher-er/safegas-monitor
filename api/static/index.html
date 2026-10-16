@@ -14,6 +14,22 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             <h1>SafeGas Monitor</h1>
         </div>
+
+        <div class="header-actions">
+            <!-- Botão Configurar E-mail -->
+            <button id="btn-email-modal" class="btn btn-outline" title="Clique para alterar o e-mail que recebe os laudos">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <span class="btn-text">E-mail:</span>
+                <strong id="header-dest-email">Carregando...</strong>
+            </button>
+
+            <!-- Botão Cadastrar Novo Equipamento -->
+            <button id="btn-register-modal" class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                <span>+ Novo Equipamento</span>
+            </button>
+        </div>
+
         <div class="stats-container">
             <div class="stat-badge">
                 <span class="stat-label">Uptime</span>
@@ -37,8 +53,16 @@
     <main class="dashboard">
         <!-- Devices Section -->
         <section class="panel devices-panel">
-            <h2>EPIs em Monitoramento</h2>
-            <div class="table-responsive">
+            <div class="panel-header-tabs">
+                <h2>EPIs & Sensores</h2>
+                <div class="tab-group">
+                    <button class="tab-btn active" id="tab-live-btn">📡 Em Monitoramento</button>
+                    <button class="tab-btn" id="tab-registry-btn">📋 Cadastrados no SQLite</button>
+                </div>
+            </div>
+
+            <!-- Tabela 1: Leituras em tempo real -->
+            <div class="table-responsive" id="container-live-devices">
                 <table id="devices-table">
                     <thead>
                         <tr>
@@ -52,8 +76,28 @@
                         </tr>
                     </thead>
                     <tbody id="devices-body">
-                        <!-- Content injected by JS -->
                         <tr><td colspan="7" class="text-center text-muted">Aguardando dados...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tabela 2: Equipamentos cadastrados no banco relacional -->
+            <div class="table-responsive hidden" id="container-registry-devices">
+                <table id="registry-table">
+                    <thead>
+                        <tr>
+                            <th>ID EPI</th>
+                            <th>Modelo / Fabricante</th>
+                            <th>Nº de Série</th>
+                            <th>Status</th>
+                            <th>Calibração</th>
+                            <th>Funcionário</th>
+                            <th>Local Atribuído</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="registry-body">
+                        <tr><td colspan="8" class="text-center text-muted">Carregando cadastros...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -75,7 +119,6 @@
                             </tr>
                         </thead>
                         <tbody id="history-body">
-                            <!-- Content injected by JS -->
                             <tr><td colspan="5" class="text-center text-muted">Nenhum evento detectado</td></tr>
                         </tbody>
                     </table>
@@ -96,7 +139,6 @@
                             </tr>
                         </thead>
                         <tbody id="incidents-body">
-                            <!-- Content injected by JS -->
                             <tr><td colspan="5" class="text-center text-muted">Nenhum incidente crítico</td></tr>
                         </tbody>
                     </table>
@@ -104,6 +146,127 @@
             </section>
         </div>
     </main>
+
+    <!-- Modal: Cadastrar Novo Equipamento -->
+    <div id="modal-register" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <h3>Cadastrar Novo Equipamento (EPI)</h3>
+                    <p>Registro institucional do detector na base SQLite e atribuição a colaborador.</p>
+                </div>
+                <button class="modal-close" id="btn-close-register">&times;</button>
+            </div>
+            <form id="form-register-device" class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="reg-device-id">ID do Dispositivo (EPI) <span class="required">*</span></label>
+                        <input type="text" id="reg-device-id" name="device_id" placeholder="Ex: EPI-004" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-model">Modelo do Detector <span class="required">*</span></label>
+                        <input type="text" id="reg-model" name="model" placeholder="Ex: SafeGas Mk.II Multi-Gás" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-manufacturer">Fabricante</label>
+                        <input type="text" id="reg-manufacturer" name="manufacturer" value="SafeGas Lab" placeholder="Ex: SafeGas Lab">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-serial-number">Número de Série</label>
+                        <input type="text" id="reg-serial-number" name="serial_number" placeholder="Ex: SG-2026-004">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-calibration-date">Data de Calibração</label>
+                        <input type="date" id="reg-calibration-date" name="calibration_date">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-next-calibration">Próxima Calibração</label>
+                        <input type="date" id="reg-next-calibration" name="next_calibration">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-status">Status Operacional</label>
+                        <select id="reg-status" name="status">
+                            <option value="ACTIVE" selected>Ativo (ACTIVE)</option>
+                            <option value="MAINTENANCE">Manutenção (MAINTENANCE)</option>
+                            <option value="RETIRED">Aposentado (RETIRED)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-gas-targets">Gases Monitorados</label>
+                        <input type="text" id="reg-gas-targets" name="gas_targets" value="CH4,CO,H2S,C3H8,C4H10">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-worker-id">Atribuir a Funcionário</label>
+                        <select id="reg-worker-id" name="worker_id">
+                            <option value="">-- Selecione o Funcionário (Opcional) --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-location-id">Local de Risco / Operação</label>
+                        <select id="reg-location-id" name="location_id">
+                            <option value="">-- Selecione o Local (Opcional) --</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="reg-notes">Observações Técnicas</label>
+                        <textarea id="reg-notes" name="notes" rows="2" placeholder="Notas sobre lote, calibração ou restrições de uso..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-register">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-register">Salvar Equipamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Configurar E-mail de Alerta -->
+    <div id="modal-email" class="modal-overlay hidden">
+        <div class="modal-card modal-card-sm">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <h3>E-mail de Notificação de Alerta</h3>
+                    <p>Defina o destinatário que receberá os laudos em PDF compilados em incidentes críticos.</p>
+                </div>
+                <button class="modal-close" id="btn-close-email">&times;</button>
+            </div>
+            <form id="form-email-settings" class="modal-body">
+                <div class="form-group">
+                    <label for="input-email-dest">Endereço de E-mail <span class="required">*</span></label>
+                    <input type="email" id="input-email-dest" name="dest_email" placeholder="exemplo@gmail.com" required>
+                    <small class="form-help">Ao atingir nível CRITICAL (R &ge; 50%), o sistema enviará o laudo técnico por este e-mail.</small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-email">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-email">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Confirmação de Início de Operação do EPI -->
+    <div id="modal-confirm-start" class="modal-overlay hidden">
+        <div class="modal-card modal-card-sm text-center">
+            <div class="confirm-icon-badge">
+                <span class="confirm-icon">🚀</span>
+            </div>
+            <h3 id="confirm-start-title" style="margin-bottom: 8px;">Equipamento Cadastrado!</h3>
+            <p id="confirm-start-msg" class="text-muted" style="font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
+                Deseja adicionar o equipamento à tela principal e <strong>iniciar o funcionamento e simulação de dados em tempo real</strong> agora?
+            </p>
+            <div class="confirm-actions" style="display: flex; gap: 12px; justify-content: center;">
+                <button type="button" class="btn btn-secondary" id="btn-confirm-no" style="flex: 1;">
+                    Não, apenas cadastrar
+                </button>
+                <button type="button" class="btn btn-primary" id="btn-confirm-yes" style="flex: 1.2;">
+                    Sim, Iniciar Funcionamento
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden"></div>
 
     <script src="app.js"></script>
 </body>
