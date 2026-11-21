@@ -142,13 +142,18 @@ def test_api_serve_report():
         res = client.get("/api/reports/incident_test_api.tex")
         assert res.status_code == 200
         assert b"Laudo Teste" in res.data
+        res.close()
 
         res_404 = client.get("/api/reports/inexistente_9999.pdf")
         assert res_404.status_code == 404
+        res_404.close()
         print("  [OK] GET /api/reports/<filename> serve o laudo corretamente")
     finally:
         if os.path.exists(sample_file):
-            os.remove(sample_file)
+            try:
+                os.remove(sample_file)
+            except OSError:
+                pass
 
 
 def run_all() -> bool:
