@@ -17,14 +17,14 @@ from config.data_contracts import TelemetryPacket, GasReading
 from epi_simulator.simulator import GasSensorSimulator, EPISimulator, SignalProfile
 
 
-# ─── Helpers ──────────────────────────────────────────────────────────────────
+# Helpers
 
 def collect_readings(sensor: GasSensorSimulator, n: int) -> list[float]:
     """Coleta n leituras de raw_percent de um sensor."""
     return [sensor.next_reading().raw_percent for _ in range(n)]
 
 
-# ─── Testes do GasSensorSimulator ─────────────────────────────────────────────
+# Testes do GasSensorSimulator
 
 def test_sensor_basic_creation():
     """Cria um sensor válido e um inválido."""
@@ -139,7 +139,7 @@ def test_sensor_reset():
     print("  [OK] Reset do sensor funcional (sample_count zerado)")
 
 
-# ─── Testes do EPISimulator ───────────────────────────────────────────────────
+# Testes do EPISimulator
 
 def test_epi_generates_packet():
     """EPISimulator deve gerar TelemetryPackets válidos."""
@@ -235,7 +235,7 @@ def test_epi_custom_sensor_config():
     print(f"  [OK] Sensor CH4 customizado: μ={mean_ch4:.4f}% (esp=2.0%)")
 
 
-# ─── Runner ───────────────────────────────────────────────────────────────────
+# Runner
 
 def run_all():
     print("\n" + "=" * 60)
@@ -263,7 +263,7 @@ def run_all():
     all_tests = sensor_tests + epi_tests
     passed = 0
 
-    print("\n── GasSensorSimulator ──────────────────────────────────────")
+    print("\n-- GasSensorSimulator --------------------------------------")
     for t in sensor_tests:
         try:
             print(f"\n[TESTE] {t.__name__}")
@@ -272,7 +272,7 @@ def run_all():
         except Exception as e:
             print(f"  [FALHOU] {e}")
 
-    print("\n── EPISimulator ────────────────────────────────────────────")
+    print("\n-- EPISimulator --------------------------------------------")
     for t in epi_tests:
         try:
             print(f"\n[TESTE] {t.__name__}")

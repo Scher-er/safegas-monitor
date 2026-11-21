@@ -1,5 +1,5 @@
 """
-SafeGas Monitor — Repositório MongoDB — Etapa 6
+SafeGas Monitor — Repositório MongoDB
 ================================================
 Persistência NoSQL para logs de telemetria de alta frequência.
 
@@ -54,7 +54,7 @@ except ImportError:
 _TELEMETRY_TTL_SECONDS: Optional[int] = None
 
 
-# ─── Utilitários de serialização ──────────────────────────────────────────────
+# Utilitários de serialização
 
 def _processed_to_doc(p: ProcessedReading) -> dict:
     """Converte ProcessedReading em documento MongoDB."""
@@ -100,7 +100,7 @@ def _incident_to_doc(inc: IncidentRecord) -> dict:
     }
 
 
-# ─── Repositório Principal ────────────────────────────────────────────────────
+# Repositório Principal
 
 class MongoTelemetryRepository:
     """

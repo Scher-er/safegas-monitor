@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 class EmergencyNotifier:
     """
-    Etapa 11: Gerenciador de Notificacoes Externas.
+    Gerenciador de Notificacoes Externas.
     Envia E-mails via SMTP e payloads JSON via Webhooks quando alertas criticos sao detectados.
     Executa chamadas de rede em background (Threads) para nao bloquear o pipeline principal.
     Possui Rate-Limiting para nao gerar spam de alertas seguidos.

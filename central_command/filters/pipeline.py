@@ -1,5 +1,5 @@
 """
-SafeGas Monitor — Pipeline de Filtragem — Etapa 4
+SafeGas Monitor — Pipeline de Filtragem
 ==================================================
 Gerencia instâncias de filtros por (device_id, gas_id) e aplica
 a filtragem sobre TelemetryPackets recebidos pelo servidor.
@@ -11,12 +11,12 @@ Responsabilidades:
     com os campos filtered_percent preenchidos
   - Permitir escolha entre Média Móvel, Kalman ou ambos
 
-Encadeamento no pipeline do servidor (Etapas 4-7):
+Encadeamento no pipeline do servidor:
     TelemetryPacket
         → FilterPipeline.process()       ← ESTA ETAPA
-        → LELCalculator.calculate()      ← Etapa 5
-        → Repositories.insert()          ← Etapa 6
-        → ReportGenerator.generate()     ← Etapa 7 (se CRÍTICO)
+        → LELCalculator.calculate()      
+        → Repositories.insert()          
+        → ReportGenerator.generate()     
 """
 
 import sys, os

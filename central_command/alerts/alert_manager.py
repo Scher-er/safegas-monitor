@@ -1,18 +1,15 @@
 """
-SafeGas Monitor — Gerenciador de Alertas — Etapa 5
+SafeGas Monitor — Gerenciador de Alertas
 ===================================================
 Classifica o nível de risco de um ProcessedReading e executa as
 ações correspondentes a cada nível de alerta.
 
 Níveis de alerta (% do LEL_mix):
-  ┌──────────────┬────────────────┬─────────────────────────────────────┐
-  │ Nível        │ Faixa R        │ Ação                                │
-  ├──────────────┼────────────────┼─────────────────────────────────────┤
-  │ NORMAL       │ R < 10%        │ Monitoramento contínuo              │
-  │ ATTENTION    │ 10% ≤ R < 25%  │ Log especial + aviso sonoro (sim.)  │
-  │ WARNING      │ 25% ≤ R < 50%  │ Alerta visual + notif. supervisor   │
-  │ CRITICAL     │ R ≥ 50%        │ Bombeiros (sim.) + Laudo LaTeX       │
-  └──────────────┴────────────────┴─────────────────────────────────────┘
+    Nível          Faixa R          Ação
+    NORMAL         R < 10%          Monitoramento contínuo
+    ATTENTION      10% ≤ R < 25%    Log especial + aviso sonoro (sim.)
+    WARNING        25% ≤ R < 50%    Alerta visual + notif. supervisor
+    CRITICAL       R ≥ 50%          Bombeiros (sim.) + Laudo LaTeX
 """
 
 import sys, os
@@ -112,7 +109,7 @@ class AlertManager:
         e executa o callback correspondente ao nível atingido.
 
         Args:
-            processed:  ProcessedReading vindo do FilterPipeline (Etapa 4)
+            processed:  ProcessedReading vindo do FilterPipeline
             lel_result: LELResult vindo do LELCalculator
 
         Returns:
@@ -217,7 +214,7 @@ class AlertManager:
             f"R={lel.risk_ratio_percent:.1f}% | "
             f"LEL_mix={lel.lel_mix_percent:.3f}%\n"
             f"  >> Notificando Bombeiros (simulado)...\n"
-            f"  >> Gerando laudo tecnico LaTeX... (Etapa 7)\n"
+            f"  >> Gerando laudo tecnico LaTeX...\n"
         )
 
     # ------------------------------------------------------------------

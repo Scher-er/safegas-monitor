@@ -27,7 +27,7 @@ from central_command.alerts.alert_manager import (
 from central_command.pipeline_handler import PipelineHandler
 
 
-# ─── Helpers ──────────────────────────────────────────────────────────────────
+# Helpers
 
 def make_readings(**gas_percents) -> list:
     """
@@ -62,7 +62,7 @@ def make_packet(device_id="EPI-T", **gas_percents) -> TelemetryPacket:
     )
 
 
-# ─── LELCalculator: Zabetakis ─────────────────────────────────────────────────
+# LELCalculator: Zabetakis
 
 def test_zabetakis_at_reference_temp():
     """A 25°C, correção deve ser fator 1.0 (sem alteração)."""
@@ -95,7 +95,7 @@ def test_zabetakis_below_25():
     print(f"  [OK] Zabetakis 0°C: LEL 25={lel_25}% → 0°C={lel_0:.4f}% (mais seguro)")
 
 
-# ─── LELCalculator: Le Chatelier ──────────────────────────────────────────────
+# LELCalculator: Le Chatelier
 
 def test_lel_single_gas_at_half_lel():
     """
@@ -228,7 +228,7 @@ def test_lel_five_gases_mixture():
     )
 
 
-# ─── risk_to_level ────────────────────────────────────────────────────────────
+# risk_to_level
 
 def test_risk_to_level_normal():
     assert risk_to_level(0.0)   == LEVEL_NORMAL
@@ -259,7 +259,7 @@ def test_risk_to_level_critical():
     print("  [OK] R ≥ 50% → CRITICAL")
 
 
-# ─── AlertManager ─────────────────────────────────────────────────────────────
+# AlertManager
 
 def _make_processed(alert_level="NORMAL", risk_ratio=5.0) -> ProcessedReading:
     """Cria ProcessedReading mínimo para testes do AlertManager."""
@@ -370,7 +370,7 @@ def test_alert_manager_callback_exception_does_not_crash():
     print("  [OK] Exceção no callback tratada: servidor não caiu")
 
 
-# ─── PipelineHandler — integração completa ────────────────────────────────────
+# PipelineHandler — integração completa
 
 def test_pipeline_handler_processes_packet():
     """PipelineHandler deve processar um TelemetryPacket completo."""
@@ -462,7 +462,7 @@ def test_pipeline_handler_with_real_simulator():
     print(f"  [OK] Escalonamento de alertas observado: {sorted(levels_seen)}")
 
 
-# ─── Runner ───────────────────────────────────────────────────────────────────
+# Runner
 
 def run_all():
     print("\n" + "=" * 65)

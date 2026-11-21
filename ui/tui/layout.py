@@ -1,5 +1,5 @@
 """
-SafeGas Monitor — Componentes da Interface (Rich) — Etapa 8
+SafeGas Monitor — Componentes da Interface (Rich)
 ===========================================================
 Gera os painéis e tabelas para a interface gráfica no terminal (TUI),
 usando a biblioteca 'rich'.

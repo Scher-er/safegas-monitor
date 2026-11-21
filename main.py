@@ -1,22 +1,13 @@
 """
-SafeGas Monitor — Ponto de Entrada Principal
-=============================================
-Uso:
-    python main.py server    → Inicia a Central de Comando (servidor TCP)
-    python main.py client    → Inicia o EPI simulado (cliente TCP)
-    python main.py demo      → Inicia ambos no mesmo processo (desenvolvimento)
-
-Exemplo de demo com vazamento crescente de CH4:
-    python main.py demo
+Ponto de entrada CLI para execução modular da Central de Comando ou do Simulador via MQTT.
+Para iniciar o ambiente completo integrado (Broker + Central + Simulador + Web + TUI), utilize `run_central.py`.
 """
 
-import sys
 import argparse
 import logging
-import threading
 import time
 
-from config.settings import SOCKET_HOST, SOCKET_PORT, SAMPLE_RATE_HZ
+from config.settings import MQTT_HOST, MQTT_PORT
 from central_command.server import CentralCommandServer
 from central_command.pipeline_handler import PipelineHandler
 from epi_simulator.simulator import EPISimulator, SignalProfile
@@ -32,132 +23,88 @@ def _setup_logging(verbose: bool = False) -> None:
     )
 
 
-# ─── Modo servidor ────────────────────────────────────────────────────────────
-
 def run_server(verbose: bool = False) -> None:
-    """Inicia somente a Central de Comando e aguarda conexões."""
+    """Inicia a Central de Comando subscrita ao broker MQTT."""
     _setup_logging(verbose)
-    print("=" * 60)
-    print(" SafeGas Monitor — Central de Comando")
-    print(f" Escutando em {SOCKET_HOST}:{SOCKET_PORT}")
-    print(" Pipeline ativo: Kalman → LEL (Le Chatelier) → Alertas")
-    print(" Ctrl+C para encerrar\n")
+    print("SafeGas Monitor - Central de Comando")
+    print(f"Broker MQTT: {MQTT_HOST}:{MQTT_PORT}")
+    print("Pipeline ativo: Kalman -> LEL (Le Chatelier) -> Alertas")
+    print("Pressione Ctrl+C para encerrar.\n")
+
     handler = PipelineHandler(filter_mode="kalman", verbose_output=True)
-    with CentralCommandServer(host=SOCKET_HOST, port=SOCKET_PORT,
-                              on_packet=handler) as server:
-        server.wait()
+    server = CentralCommandServer(host=MQTT_HOST, port=MQTT_PORT, on_packet=handler)
+    server.start()
+    try:
+        while True:
+            time.sleep(1.0)
+    except KeyboardInterrupt:
+        print("\nEncerrando Central de Comando...")
+    finally:
+        server.stop()
 
-
-# ─── Modo cliente ─────────────────────────────────────────────────────────────
 
 def run_client(verbose: bool = False) -> None:
-    """Inicia somente o EPI simulado e conecta à Central."""
+    """Inicia uma instância de EPI simulado publicando no broker MQTT."""
     _setup_logging(verbose)
-    print("=" * 60)
-    print(" SafeGas Monitor — EPI Simulado")
-    print(f" Conectando à Central em {SOCKET_HOST}:{SOCKET_PORT}")
-    print(" Ctrl+C para encerrar\n")
+    print("SafeGas Monitor - Simulador de EPI")
+    print(f"Publicando no broker MQTT em {MQTT_HOST}:{MQTT_PORT}")
+    print("Pressione Ctrl+C para encerrar.\n")
 
-    epi = EPISimulator(
+    epi = EPISimulator.create_scenario(
+        scenario_type="leak",
         device_id="EPI-001",
         worker_id="F-042",
         location_id="LOC-003",
-        sensor_configs={
-            "CH4": {
-                "base": 0.0,
-                "noise_std": 0.008,
-                "profile": SignalProfile.RAMP_UP,
-                "ramp_rate": 0.03,       # sobe ~1.8%/min → crítico em ~3 min
-            },
-            "CO": {
-                "base": 0.05,
-                "noise_std": 0.003,
-                "profile": SignalProfile.CONSTANT,
-            },
-            "H2S": {
-                "base": 0.0,
-                "noise_std": 0.001,
-                "profile": SignalProfile.CONSTANT,
-            },
-        },
     )
 
     client = EPISocketClient(
-        host=SOCKET_HOST,
-        port=SOCKET_PORT,
-        on_connect=lambda: print("[EPI] ✓ Conectado à Central!"),
-        on_disconnect=lambda: print("[EPI] ✗ Conexão perdida — reconectando..."),
+        host=MQTT_HOST,
+        port=MQTT_PORT,
+        on_connect=lambda: print("[EPI] Conectado ao broker MQTT."),
+        on_disconnect=lambda: print("[EPI] Desconectado do broker MQTT."),
     )
 
     if client.connect_with_retry(max_attempts=10):
         try:
             client.run_with_simulator(epi)
         except KeyboardInterrupt:
-            print("\n[EPI] Interrompido pelo usuário.")
+            print("\n[EPI] Simulação interrompida pelo usuário.")
         finally:
             client.disconnect()
     else:
-        print("[EPI] Não foi possível conectar. Certifique-se que a Central está rodando.")
+        print("[EPI] Falha ao conectar ao broker MQTT.")
 
-
-# ─── Modo demo (servidor + cliente no mesmo processo) ─────────────────────────
 
 def run_demo(verbose: bool = False) -> None:
-    """
-    Inicia servidor e cliente no mesmo processo para desenvolvimento rápido.
-    O servidor sobe em thread daemon; o cliente roda na thread principal.
-    """
+    """Executa subscriber e simulador no mesmo processo (requer broker MQTT ativo)."""
     _setup_logging(verbose)
-    print("=" * 60)
-    print(" SafeGas Monitor — Modo Demo (EPI + Central)")
-    print(" Cenário: vazamento crescente de CH4 + CO constante")
-    print(" Ctrl+C para encerrar\n")
+    print("SafeGas Monitor - Modo Demo (Central + EPI)")
+    print("Pressione Ctrl+C para encerrar.\n")
 
-    # 1. Pipeline handler (Etapas 4+5)
     handler = PipelineHandler(filter_mode="kalman", verbose_output=True)
-
-    # 2. Sobe o servidor em background
-    server = CentralCommandServer(host=SOCKET_HOST, port=SOCKET_PORT,
-                                  on_packet=handler)
+    server = CentralCommandServer(host=MQTT_HOST, port=MQTT_PORT, on_packet=handler)
     server.start()
-    time.sleep(0.3)   # garante que o bind/listen completou
+    time.sleep(0.3)
 
-    # 2. Cria o EPI simulado com cenário de emergência
-    epi = EPISimulator(
+    epi = EPISimulator.create_scenario(
+        scenario_type="leak",
         device_id="EPI-DEMO",
-        worker_id="F-001",
-        location_id="LOC-001",
-        sensor_configs={
-            "CH4": {
-                "base": 0.0,
-                "noise_std": 0.008,
-                "profile": SignalProfile.RAMP_UP,
-                "ramp_rate": 0.05,   # escala rápida para demonstração
-            },
-            "CO": {
-                "base": 0.1,
-                "noise_std": 0.005,
-                "profile": SignalProfile.SINUSOIDAL,
-                "sine_amplitude": 0.02,
-                "sine_period_s": 20.0,
-            },
-        },
+        worker_id="F-042",
+        location_id="LOC-003",
     )
 
-    # 3. Cria e conecta o cliente
     client = EPISocketClient(
-        host=SOCKET_HOST,
-        port=SOCKET_PORT,
-        on_connect=lambda: print("[EPI] ✓ Conectado à Central!\n"),
-        on_disconnect=lambda: print("[EPI] ✗ Conexão perdida."),
+        host=MQTT_HOST,
+        port=MQTT_PORT,
+        on_connect=lambda: print("[EPI] Conectado ao broker MQTT.\n"),
+        on_disconnect=lambda: print("[EPI] Conexão encerrada."),
     )
 
     if not client.connect_with_retry(max_attempts=5):
-        print("[DEMO] Falha ao conectar. Encerrando.")
+        print("[DEMO] Falha ao conectar ao broker MQTT.")
         server.stop()
         return
 
-    # 4. Roda o loop de transmissão
     try:
         client.run_with_simulator(epi)
     except KeyboardInterrupt:
@@ -165,45 +112,23 @@ def run_demo(verbose: bool = False) -> None:
     finally:
         client.disconnect()
         server.stop()
-        stats = server.stats
-        print(
-            f"\n[DEMO] Sessão encerrada — "
-            f"{stats['total_packets_received']} pacotes processados."
-        )
 
-
-# ─── Entrypoint ───────────────────────────────────────────────────────────────
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="SafeGas Monitor — Sistema de Monitoramento de Gases",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Exemplos:
-  python main.py demo           Roda servidor + EPI no mesmo processo
-  python main.py server         Roda somente a Central de Comando
-  python main.py client         Roda somente o EPI (servidor deve estar ativo)
-  python main.py demo -v        Modo demo com logs detalhados
-        """,
-    )
+    parser = argparse.ArgumentParser(description="SafeGas Monitor - CLI")
     parser.add_argument(
         "mode",
         choices=["server", "client", "demo"],
         nargs="?",
         default="demo",
-        help="Modo de execução (padrão: demo)",
+        help="Modo de operação (padrão: demo)",
     )
     parser.add_argument(
         "-v", "--verbose",
         action="store_true",
-        help="Habilita logs de debug detalhados",
+        help="Habilita logs detalhados",
     )
     args = parser.parse_args()
-
-    print("=" * 60)
-    print(" SafeGas Monitor v0.3.0 (Etapa 3 — Sockets TCP)")
-    print(" Projetos em Engenharia da Computação I — UNIVAP 2026")
-    print("=" * 60 + "\n")
 
     if args.mode == "server":
         run_server(args.verbose)

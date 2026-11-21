@@ -30,7 +30,7 @@ from reports.latex.report_generator import (
 )
 
 
-# ─── Helpers ──────────────────────────────────────────────────────────────────
+# Helpers
 
 def _make_processed(
     device_id="EPI-TEX",
@@ -111,7 +111,7 @@ def _make_history(n=30, device_id="EPI-TEX") -> list[ProcessedReading]:
     return history
 
 
-# ─── Testes de utilidades ─────────────────────────────────────────────────────
+# Testes de utilidades
 
 def test_latex_escape_special_chars():
     """Caracteres especiais LaTeX devem ser escapados corretamente."""
@@ -151,7 +151,7 @@ def test_fmt_risk_level_colors():
     print("  [OK] _fmt_risk_level: cores corretas para todos os níveis")
 
 
-# ─── Testes IncidentChartGenerator ───────────────────────────────────────────
+# Testes IncidentChartGenerator
 
 def test_chart_generator_creates_png():
     """IncidentChartGenerator deve criar um arquivo PNG válido."""
@@ -205,7 +205,7 @@ def test_chart_generator_single_reading():
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
-# ─── Testes LatexReportGenerator ─────────────────────────────────────────────
+# Testes LatexReportGenerator
 
 def test_report_generator_creates_tex():
     """generate() deve criar um arquivo .tex no diretório configurado."""
@@ -363,7 +363,7 @@ def test_report_chart_embedded_in_tex():
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
-# ─── Testes PipelineHandler + Etapa 7 ────────────────────────────────────────
+# Testes PipelineHandler + Etapa 7
 
 def test_pipeline_generates_report_on_critical():
     """PipelineHandler deve gerar laudo automaticamente em evento CRITICAL."""
@@ -459,7 +459,7 @@ def test_pipeline_report_generator_exception_does_not_crash():
     print("  [OK] Exceção no gerador não derruba o PipelineHandler")
 
 
-# ─── Runner ───────────────────────────────────────────────────────────────────
+# Runner
 
 def run_all():
     print("\n" + "=" * 65)

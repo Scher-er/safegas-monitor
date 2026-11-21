@@ -29,7 +29,7 @@ from epi_simulator.simulator import GasSensorSimulator, SignalProfile
 from central_command.filters.digital_filters import MovingAverageFilter, KalmanFilter1D
 from config.settings import MOVING_AVG_WINDOW, KALMAN_PROCESS_VARIANCE, KALMAN_MEASUREMENT_VARIANCE
 
-# ─── Parâmetros do experimento ────────────────────────────────────────────────
+# Parâmetros do experimento
 N_SAMPLES    = 120          # 2 minutos @ 1 Hz
 NOISE_STD    = 0.08         # ruído gaussiano (% v/v) — relativamente alto para visualização
 BASE_CONC    = 0.0          # concentração inicial (% v/v)
@@ -41,7 +41,7 @@ OUTPUT_PATH  = os.path.join(os.path.dirname(__file__), "..", "docs", "filter_com
 
 
 def run():
-    # ─── Gera sinal simulado ──────────────────────────────────────────
+    # Gera sinal simulado
     sensor = GasSensorSimulator(
         gas_id="CH4",
         base_concentration=BASE_CONC,
@@ -76,7 +76,7 @@ def run():
     kf_arr   = np.array(kf_sig)
     true_arr = np.array(true_sig)
 
-    # ─── Métricas de erro ─────────────────────────────────────────────
+    # Métricas de erro
     # Ignora as primeiras N amostras de aquecimento do MA
     warmup = MA_WINDOW
     raw_mae  = np.mean(np.abs(raw_arr[warmup:] - true_arr[warmup:]))
@@ -86,7 +86,7 @@ def run():
     ma_rmse  = np.sqrt(np.mean((ma_arr[warmup:]  - true_arr[warmup:]) ** 2))
     kf_rmse  = np.sqrt(np.mean((kf_arr[warmup:]  - true_arr[warmup:]) ** 2))
 
-    # ── Métricas de redução de ruído (sinal constante, cenário justo) ──
+    # Métricas de redução de ruído (sinal constante, cenário justo)
     rng2 = np.random.default_rng(42)
     TRUE_CONST = 1.5
     ma2 = MovingAverageFilter(window_size=MA_WINDOW)
@@ -121,7 +121,7 @@ def run():
     print(f"  {'Kalman':<16} {kf2_mae:>8.4f}  {100*(1-kf2_mae/raw2_mae):.1f}% melhor")
     print("=" * 62)
 
-    # ─── Plot ─────────────────────────────────────────────────────────
+    # Plot
     plt.style.use("seaborn-v0_8-whitegrid")
     fig = plt.figure(figsize=(14, 10))
     fig.suptitle(
@@ -132,7 +132,7 @@ def run():
 
     gs = gridspec.GridSpec(3, 1, hspace=0.45, figure=fig)
 
-    # ── Painel 1: Sinal bruto ──────────────────────────────────────
+    # Painel 1: Sinal bruto
     ax1 = fig.add_subplot(gs[0])
     ax1.plot(t_axis, raw_arr,  color="#E74C3C", lw=0.9, alpha=0.7, label="Sinal bruto")
     ax1.plot(t_axis, true_arr, color="#2C3E50", lw=1.5, ls="--",   label="Sinal real (referência)")
@@ -141,7 +141,7 @@ def run():
     ax1.legend(loc="upper left", fontsize=9)
     ax1.set_ylim(bottom=0)
 
-    # ── Painel 2: Filtros comparados ───────────────────────────────
+    # Painel 2: Filtros comparados
     ax2 = fig.add_subplot(gs[1])
     ax2.plot(t_axis, raw_arr, color="#E74C3C", lw=0.6, alpha=0.4, label="Bruto")
     ax2.plot(t_axis, ma_arr,  color="#F39C12", lw=1.8, label=f"Média Móvel (N={MA_WINDOW})")
@@ -152,7 +152,7 @@ def run():
     ax2.legend(loc="upper left", fontsize=9)
     ax2.set_ylim(bottom=0)
 
-    # ── Painel 3: Erro de estimação ────────────────────────────────
+    # Painel 3: Erro de estimação
     ax3 = fig.add_subplot(gs[2])
     error_raw = raw_arr - true_arr
     error_ma  = ma_arr  - true_arr

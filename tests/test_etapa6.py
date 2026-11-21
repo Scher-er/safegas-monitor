@@ -35,7 +35,7 @@ from database.nosql.mongo_repository import MongoTelemetryRepository
 from central_command.pipeline_handler import PipelineHandler
 
 
-# ─── Helpers SQLite ───────────────────────────────────────────────────────────
+# Helpers SQLite
 
 # Schema sem dados de seed (apenas DDL) para testes isolados
 _SCHEMA_DDL_ONLY = """
@@ -180,7 +180,7 @@ def _sample_processed() -> ProcessedReading:
     )
 
 
-# ─── Testes DeviceRepository ──────────────────────────────────────────────────
+# Testes DeviceRepository
 
 def test_device_register_and_get():
     """Registra e recupera um EPI por ID."""
@@ -288,7 +288,7 @@ def test_device_calibration_alerts_view():
     print(f"  [OK] Alertas de calibração: {statuses}")
 
 
-# ─── Testes WorkerRepository ──────────────────────────────────────────────────
+# Testes WorkerRepository
 
 def test_worker_register_and_get():
     """Registra e recupera um funcionário."""
@@ -332,7 +332,7 @@ def test_worker_list_active_vs_all():
     print(f"  [OK] Funcionários: {len(all_w)} total, {len(active_w)} ativos")
 
 
-# ─── Testes LocationRepository ────────────────────────────────────────────────
+# Testes LocationRepository
 
 def test_location_register_and_get():
     """Registra e recupera um local."""
@@ -367,7 +367,7 @@ def test_location_list_by_risk():
     print(f"  [OK] list_by_risk: HIGH={len(highs)}, EXTREME={len(extremes)}")
 
 
-# ─── Testes AssignmentRepository ──────────────────────────────────────────────
+# Testes AssignmentRepository
 
 def test_assignment_full_cycle():
     """Ciclo completo: registrar EPI+Funcionário, atribuir, devolver."""
@@ -432,7 +432,7 @@ def test_assignment_get_by_device():
     print("  [OK] get_by_device retorna atribuição ativa correta")
 
 
-# ─── Testes MongoDB ───────────────────────────────────────────────────────────
+# Testes MongoDB
 
 def _check_mongo_available() -> bool:
     """Verifica se MongoDB está acessível (timeout 1s)."""
@@ -517,7 +517,7 @@ def test_mongo_insert_incident():
     print(f"  [OK] MongoDB incidente inserido: _id={mongo_id[:12]}...")
 
 
-# ─── PipelineHandler com MongoDB desativado ───────────────────────────────────
+# PipelineHandler com MongoDB desativado
 
 def test_pipeline_handler_without_mongo():
     """PipelineHandler com enable_mongo=False deve funcionar normalmente."""
@@ -542,7 +542,7 @@ def test_pipeline_handler_without_mongo():
     print(f"  [OK] PipelineHandler sem MongoDB: level={result.alert_level}, mongo=False")
 
 
-# ─── Runner ───────────────────────────────────────────────────────────────────
+# Runner
 
 def run_all():
     print("\n" + "=" * 65)

@@ -24,7 +24,7 @@ import uuid
 from datetime import datetime, timezone
 
 
-# ─── Helpers ──────────────────────────────────────────────────────────────────
+# Helpers
 
 def make_packet(device_id="EPI-T", readings_data: dict = None) -> TelemetryPacket:
     """Cria um TelemetryPacket de teste com leituras configuráveis."""
@@ -44,7 +44,7 @@ def make_packet(device_id="EPI-T", readings_data: dict = None) -> TelemetryPacke
     )
 
 
-# ─── MovingAverageFilter ──────────────────────────────────────────────────────
+# MovingAverageFilter
 
 def test_ma_single_value():
     """Com uma amostra, saída deve ser igual à entrada."""
@@ -150,7 +150,7 @@ def test_ma_reduces_noise():
           f"(melhora={100*(1-ma_mae/raw_mae):.1f}%)")
 
 
-# ─── KalmanFilter1D ───────────────────────────────────────────────────────────
+# KalmanFilter1D
 
 def test_kalman_first_sample():
     """Primeira amostra deve inicializar x̂ igual à medição."""
@@ -266,7 +266,7 @@ def test_kalman_reduces_noise_vs_ma():
     )
 
 
-# ─── FilterPipeline ───────────────────────────────────────────────────────────
+# FilterPipeline
 
 def test_pipeline_mode_kalman():
     """Pipeline no modo kalman deve preencher filtered_percent em todas as leituras."""
@@ -401,7 +401,7 @@ def test_pipeline_with_real_simulator():
     )
 
 
-# ─── Runner ───────────────────────────────────────────────────────────────────
+# Runner
 
 def run_all():
     print("\n" + "=" * 62)

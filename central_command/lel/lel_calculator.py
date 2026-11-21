@@ -1,5 +1,5 @@
 """
-SafeGas Monitor — Calculador de LEL de Misturas — Etapa 5
+SafeGas Monitor — Calculador de LEL de Misturas
 ==========================================================
 Implementa:
   1. Correção de LEL por temperatura (Zabetakis, 1965)
@@ -7,20 +7,18 @@ Implementa:
   3. Cálculo do fator de risco R = (C_mix / LEL_mix) × 100%
 
 Equações:
-  ┌─────────────────────────────────────────────────────────┐
-  │  Correção de Zabetakis (temperatura):                   │
-  │    LEL_T = LEL_25 × [1 - 0.08 × (T - 25) / 100]        │
-  │                                                         │
-  │  Le Chatelier (misturas):                               │
-  │             100                                         │
-  │  LEL_mix = ─────────────────                            │
-  │             Σ  (Ci / LEL_i,T)                           │
-  │              i                                          │
-  │                                                         │
-  │  Fator de risco (%):                                    │
-  │    R = (C_mix / LEL_mix) × 100                          │
-  │  onde C_mix = Σ Ci                                      │
-  └─────────────────────────────────────────────────────────┘
+     Correção de Zabetakis (temperatura):
+       LEL_T = LEL_25 × [1 - 0.08 × (T - 25) / 100]
+
+     Le Chatelier (misturas):
+                100
+     LEL_mix = -----------------
+                Σ  (Ci / LEL_i,T)
+                 i
+
+     Fator de risco (%):
+       R = (C_mix / LEL_mix) × 100
+     onde C_mix = Σ Ci
 
 Referências:
   - Zabetakis, M. G. (1965). Flammability characteristics of
@@ -52,7 +50,7 @@ _ZABETAKIS_REF_T = 25.0            # temperatura de referência (°C)
 _MIN_CONCENTRATION_PERCENT = 1e-6  # 0.001 ppm — limiar de detecção
 
 
-# ─── Resultado do cálculo ─────────────────────────────────────────────────────
+# Resultado do cálculo
 
 @dataclass
 class LELResult:
@@ -78,7 +76,7 @@ class LELResult:
         )
 
 
-# ─── Calculador ───────────────────────────────────────────────────────────────
+# Calculador
 
 class LELCalculator:
     """
@@ -175,7 +173,7 @@ class LELCalculator:
         Returns:
             LELResult com todos os campos calculados.
         """
-        # ── Extrai concentrações e aplica Zabetakis ───────────────────
+        # Extrai concentrações e aplica Zabetakis
         concentrations: dict[str, float] = {}
         corrected_lels: dict[str, float] = {}
         corrections_log: dict[str, float] = {}
@@ -200,7 +198,7 @@ class LELCalculator:
             corrections_log[r.gas_id] = round(lel_t, 6)
             gases_contributing.append(r.gas_id)
 
-        # ── Calcula C_mix e LEL_mix ───────────────────────────────────
+        # Calcula C_mix e LEL_mix
         c_mix = sum(concentrations.values())
 
         if not gases_contributing:
@@ -217,7 +215,7 @@ class LELCalculator:
 
         lel_mix = self._le_chatelier(concentrations, corrected_lels)
 
-        # ── Fator de risco R (% do LEL_mix) ──────────────────────────
+        # Fator de risco R (% do LEL_mix)
         # Fórmula correta: R = Σ(Ci/LELi,T) × 100
         # (algebricamente equivalente a C_mix/LEL_mix × 100 apenas quando
         #  os gases têm LELs idênticos, mas a fórmula Σ é a canônica

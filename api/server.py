@@ -73,7 +73,7 @@ def get_incidents():
         for i in _monitor_state.incidents
     ])
 
-# ─── Configurações: E-mail de Notificação de Alerta ──────────────────────────
+# Configurações: E-mail de Notificação de Alerta
 
 @app.route("/api/settings/email", methods=["GET"])
 def get_email_setting():
@@ -108,7 +108,7 @@ def update_email_setting():
         "message": f"E-mail de alerta atualizado com sucesso para {new_email}!"
     })
 
-# ─── Cadastros: Funcionários e Locais (para formulários) ──────────────────────
+# Cadastros: Funcionários e Locais (para formulários)
 
 @app.route("/api/workers", methods=["GET"])
 def get_workers():
@@ -142,7 +142,7 @@ def get_locations():
         for l in locations
     ])
 
-# ─── Cadastros: Dispositivos EPI ──────────────────────────────────────────────
+# Cadastros: Dispositivos EPI
 
 @app.route("/api/devices/registered", methods=["GET"])
 def get_registered_devices():
@@ -237,7 +237,7 @@ def register_device():
         "device_id": device_id
     }), 201
 
-# ─── Simulador: Controle Dinâmico de Transmissão de EPIs ──────────────────────
+# Simulador: Controle Dinâmico de Transmissão de EPIs
 
 @app.route("/api/simulator/active", methods=["GET"])
 def get_active_simulations():
@@ -312,7 +312,7 @@ def stop_device_simulation():
         "message": f"Simulação do equipamento {device_id} pausada."
     })
 
-# ─── Servir frontend estático no `/` ──────────────────────────────────────────
+# Servir frontend estático no `/`
 @app.route("/")
 def index():
     return send_from_directory(app.static_folder, "index.html")

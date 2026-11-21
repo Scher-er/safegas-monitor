@@ -1,14 +1,14 @@
 """
-SafeGas Monitor — Handler do Pipeline Completo (Etapas 4 – 7)
+SafeGas Monitor — Handler do Pipeline Completo
 =============================================================
 Encadeia as etapas de processamento recebidas pelo servidor:
 
-    TelemetryPacket (Etapa 3)
-        → FilterPipeline.process()       (Etapa 4)
-        → LELCalculator.calculate()      (Etapa 5)
-        → AlertManager.classify()        (Etapa 5)
-        → MongoTelemetryRepository       (Etapa 6)
-        → LatexReportGenerator           (Etapa 7 — apenas em CRITICAL)
+    TelemetryPacket
+        → FilterPipeline.process()
+        → LELCalculator.calculate()
+        → AlertManager.classify()
+        → MongoTelemetryRepository
+        → LatexReportGenerator
 
 O `PipelineHandler` é passado como `on_packet` ao `CentralCommandServer`.
 
@@ -49,9 +49,9 @@ class PipelineHandler:
     Orquestrador do pipeline de processamento de telemetria.
 
     Cria internamente:
-      - FilterPipeline   (Etapa 4)
-      - LELCalculator    (Etapa 5)
-      - AlertManager     (Etapa 5)
+      - FilterPipeline
+      - LELCalculator
+      - AlertManager
 
     Pode ser usado diretamente como callable:
         handler = PipelineHandler()
@@ -75,7 +75,7 @@ class PipelineHandler:
         self._filter_pipeline = FilterPipeline(mode=filter_mode)
         self._lel_calculator  = LELCalculator()
         self._alert_manager   = AlertManager()
-        # Etapa 10: Repositório SQLite para metadados (cache em memória)
+        # Repositório SQLite para metadados (cache em memória)
         self._sqlite = AssignmentRepository()
         self._metadata_cache = {}
 
@@ -91,14 +91,14 @@ class PipelineHandler:
         self._incidents_generated = 0
         self._monitor_state = monitor_state
 
-        # Etapa 6: Repositório MongoDB (modo degradado se indisponível)
+        # Repositório MongoDB (modo degradado se indisponível)
         self._mongo = MongoTelemetryRepository() if enable_mongo else None
         if self._mongo and self._mongo.is_available:
             log.info("Persistência MongoDB ativa.")
         else:
             log.info("Persistência MongoDB desativada (modo sem banco).")
 
-        # Etapa 7: Gerador de laudos LaTeX
+        # Gerador de laudos LaTeX
         self._report_generator = LatexReportGenerator(compile_pdf=True)
 
         # Histórico por dispositivo (buffer circular, tamanho configurado em settings)
@@ -121,42 +121,42 @@ class PipelineHandler:
 
         Returns:
             ProcessedReading completamente preenchido:
-              - filtered_percent    ← Etapa 4 (Filtros)
-              - lel_contribution    ← Etapa 5 (Le Chatelier)
-              - lel_mix_percent     ← Etapa 5
-              - risk_ratio_percent  ← Etapa 5
-              - alert_level         ← Etapa 5 (AlertManager)
+              - filtered_percent    
+              - lel_contribution    
+              - lel_mix_percent     
+              - risk_ratio_percent  
+              - alert_level         
         """
         self._packets_processed += 1
 
-        # ── Etapa 4: Filtragem ────────────────────────────────────────────────────────
+        # Filtragem
         processed = self._filter_pipeline.process(packet)
 
-        # ── Etapa 5a: Cálculo de LEL ──────────────────────────────────────────
+        # Cálculo de LEL
         lel_result = self._lel_calculator.calculate(
             readings=processed.readings,
             temperature_c=packet.temperature_c,
             use_filtered=True,
         )
 
-        # ── Etapa 5b: Classificação de Alerta ──────────────────────────────
+        # Classificação de Alerta
         processed = self._alert_manager.classify(processed, lel_result)
 
-        # ── Atualiza histórico por dispositivo ─────────────────────────────────
+        # Atualiza histórico por dispositivo
         dev = processed.device_id
         if dev not in self._history:
             self._history[dev] = deque(maxlen=REPORT_HISTORY_SIZE)
         self._history[dev].append(processed)
 
-        # ── Saída de terminal (modo verbose) ────────────────────────────────
+        # Saída de terminal (modo verbose)
         if self._verbose:
             self._print_summary(packet, processed, lel_result)
 
-        # ── Etapa 6: Persistência no MongoDB ──────────────────────────────
+        # Persistência no MongoDB
         if self._mongo:
             self._mongo.insert_reading(processed)
 
-        # ── Etapa 10: Enriquecimento com SQLite ──────────────────────────────
+        # Enriquecimento com SQLite
         dev = processed.device_id
         if dev not in self._metadata_cache:
             assignment = self._sqlite.get_by_device(dev)
@@ -181,15 +181,15 @@ class PipelineHandler:
         processed.worker_id = meta["worker_name"]
         processed.location_id = meta["location_name"]
         
-        # ── Atualiza o estado da TUI (Etapa 8) ─────────────────────────────
+        # Atualiza o estado da TUI
         if self._monitor_state:
             self._monitor_state.update_from_reading(processed, lel_result)
 
-        # ── Etapa 7: Laudo LaTeX se CRITICAL ──────────────────────────────
+        # Laudo LaTeX se CRITICAL
         if processed.alert_level == "CRITICAL":
             incident = self._generate_report(processed, lel_result)
             
-            # Etapa 11: Notificacao Externa
+            # Notificacao Externa
             if hasattr(self, '_notifier'):
                 self._notifier.notify_critical_incident(
                     device_id=processed.device_id,
@@ -204,17 +204,17 @@ class PipelineHandler:
 
     # ------------------------------------------------------------------
     def _generate_report(self, processed, lel_result):
-        """Gera laudo LaTeX e insere IncidentRecord no MongoDB (Etapa 7)."""
+        """Gera laudo LaTeX e insere IncidentRecord no MongoDB."""
         try:
             history = list(self._history.get(processed.device_id, []))
             incident = self._report_generator.generate(processed, lel_result, history)
             self._incidents_generated += 1
 
-            # Persiste incidente no MongoDB (Etapa 6 + 7 integrado)
+            # Persiste incidente no MongoDB
             if self._mongo and incident:
                 self._mongo.insert_incident(incident)
 
-            # Atualiza TUI (Etapa 8)
+            # Atualiza TUI
             if self._monitor_state and incident:
                 self._monitor_state.add_incident(
                     incident_id=incident.incident_id,

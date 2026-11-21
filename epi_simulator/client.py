@@ -103,7 +103,7 @@ class EPISocketClient:
         self.disconnect()
 
 
-# ─── Gerenciador Multi-Dispositivo de Simulação ──────────────────────────────
+# Gerenciador Multi-Dispositivo de Simulação
 class SimulationManager:
     """
     Gerenciador multi-dispositivo de simulação de EPIs com publicação MQTT.

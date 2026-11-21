@@ -1,5 +1,5 @@
 """
-SafeGas Monitor — Estado Thread-Safe do Monitor — Etapa 8
+SafeGas Monitor — Estado Thread-Safe do Monitor
 =========================================================
 Centraliza o estado compartilhado entre o pipeline (threads do servidor)
 e a interface TUI (thread de renderização). Todas as operações são
@@ -30,7 +30,7 @@ MAX_HISTORY = 50
 MAX_INCIDENTS = 30
 
 
-# ─── Dataclasses de estado ────────────────────────────────────────────────────
+# Dataclasses de estado
 
 @dataclass
 class DeviceStatus:
@@ -82,7 +82,7 @@ class IncidentEntry:
         return self.triggered_at[11:19] if len(self.triggered_at) >= 19 else self.triggered_at
 
 
-# ─── Estado principal (thread-safe) ──────────────────────────────────────────
+# Estado principal (thread-safe)
 
 class MonitorState:
     """
@@ -109,7 +109,7 @@ class MonitorState:
         self._total_packets: int = 0
         self._total_critical: int = 0
 
-    # ── Atualizações (chamadas pelas threads do servidor) ─────────────────────
+    # Atualizações (chamadas pelas threads do servidor)
 
     def update_from_reading(
         self,
@@ -178,7 +178,7 @@ class MonitorState:
                 latex_path=os.path.basename(latex_path),
             ))
 
-    # ── Leituras (chamadas pela thread de renderização) ───────────────────────
+    # Leituras (chamadas pela thread de renderização)
 
     @property
     def devices(self) -> list[DeviceStatus]:

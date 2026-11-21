@@ -1,4 +1,4 @@
--- SafeGas Monitor — Esquema SQLite — Etapa 6
+-- SafeGas Monitor — Esquema SQLite
 -- ===========================================
 -- Banco relacional para cadastros institucionais:
 --   dispositivos EPI, funcionários e locais de risco.
@@ -14,7 +14,7 @@
 PRAGMA journal_mode = WAL;        -- Write-Ahead Logging para maior performance
 PRAGMA foreign_keys = ON;         -- Integridade referencial habilitada
 
--- ─── Dispositivos EPI ────────────────────────────────────────────────────────
+-- Dispositivos EPI
 CREATE TABLE IF NOT EXISTS devices (
     device_id          TEXT PRIMARY KEY,           -- ex: "EPI-001"
     model              TEXT NOT NULL,              -- modelo do sensor
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS devices (
     notes              TEXT
 );
 
--- ─── Funcionários ────────────────────────────────────────────────────────────
+-- Funcionários
 CREATE TABLE IF NOT EXISTS workers (
     worker_id          TEXT PRIMARY KEY,           -- matrícula: "F-042"
     full_name          TEXT NOT NULL,
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS workers (
     registered_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- ─── Locais de Risco ─────────────────────────────────────────────────────────
+-- Locais de Risco
 CREATE TABLE IF NOT EXISTS locations (
     location_id        TEXT PRIMARY KEY,           -- ex: "LOC-003"
     name               TEXT NOT NULL,              -- ex: "Galeria Subterrânea Norte"
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS locations (
     notes              TEXT
 );
 
--- ─── Atribuições EPI ↔ Funcionário ───────────────────────────────────────────
+-- Atribuições EPI ↔ Funcionário
 CREATE TABLE IF NOT EXISTS assignments (
     assignment_id      INTEGER PRIMARY KEY AUTOINCREMENT,
     device_id          TEXT NOT NULL REFERENCES devices(device_id) ON DELETE CASCADE,
@@ -69,14 +69,14 @@ CREATE TABLE IF NOT EXISTS assignments (
                         CHECK (active IN (0, 1))
 );
 
--- ─── Índices ─────────────────────────────────────────────────────────────────
+-- Índices
 CREATE INDEX IF NOT EXISTS idx_assignments_device  ON assignments(device_id);
 CREATE INDEX IF NOT EXISTS idx_assignments_worker  ON assignments(worker_id);
 CREATE INDEX IF NOT EXISTS idx_assignments_active  ON assignments(active);
 CREATE INDEX IF NOT EXISTS idx_devices_status      ON devices(status);
 CREATE INDEX IF NOT EXISTS idx_workers_active      ON workers(active);
 
--- ─── Views úteis ─────────────────────────────────────────────────────────────
+-- Views úteis
 
 -- Atribuições ativas com detalhes do EPI e funcionário
 CREATE VIEW IF NOT EXISTS v_active_assignments AS
@@ -113,7 +113,7 @@ SELECT
 FROM devices
 WHERE status = 'ACTIVE';
 
--- ─── Dados de seed (desenvolvimento) ─────────────────────────────────────────
+-- Dados de seed (desenvolvimento)
 INSERT OR IGNORE INTO devices (device_id, model, manufacturer, serial_number,
     calibration_date, next_calibration, status, gas_targets) VALUES
     ('EPI-001', 'SafeGas Mk.I (Simulado)', 'SafeGas Lab', 'SG-SIM-001',

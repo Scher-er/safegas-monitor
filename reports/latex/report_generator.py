@@ -1,5 +1,5 @@
 """
-SafeGas Monitor — Gerador de Laudos LaTeX — Etapa 7
+SafeGas Monitor — Gerador de Laudos LaTeX
 =====================================================
 Gera laudos técnicos automatizados no padrão ABNT quando um evento
 CRITICAL é detectado pela Central de Comando.
@@ -14,15 +14,13 @@ Fluxo:
   7. Cria IncidentRecord e insere no MongoDB
 
 Estrutura do laudo:
-  ┌─────────────────────────────────────────────────────────┐
-  │  Cabeçalho institucional (SafeGas Monitor / UNIVAP)     │
-  │  1. Dados do Incidente (EPI, funcionário, local, hora)  │
-  │  2. Resumo das Leituras (tabela de gases filtrados)     │
-  │  3. Cálculo LEL (tabela Le Chatelier por gás)           │
-  │  4. Histórico de Alertas (últimos N eventos)            │
-  │  5. Gráfico de Concentração e Risco (PNG embutido)      │
-  │  6. Rodapé: observações, assinatura, timestamp          │
-  └─────────────────────────────────────────────────────────┘
+     Cabeçalho institucional (SafeGas Monitor / UNIVAP)
+     1. Dados do Incidente (EPI, funcionário, local, hora)
+     2. Resumo das Leituras (tabela de gases filtrados)
+     3. Cálculo LEL (tabela Le Chatelier por gás)
+     4. Histórico de Alertas (últimos N eventos)
+     5. Gráfico de Concentração e Risco (PNG embutido)
+     6. Rodapé: observações, assinatura, timestamp
 """
 
 import sys, os
@@ -52,7 +50,7 @@ _PROJECT     = "SafeGas Monitor — Projetos em Engenharia I"
 _AUTHORS     = "Equipe SafeGas (Engenharia da Computação)"
 
 
-# ─── Utilitários de escape LaTeX ──────────────────────────────────────────────
+# Utilitários de escape LaTeX
 
 def _latex_escape(text: str) -> str:
     """
@@ -95,7 +93,7 @@ def _fmt_float(v: float, decimals: int = 4) -> str:
     return formatted.replace(".", ",")
 
 
-# ─── Template LaTeX ───────────────────────────────────────────────────────────
+# Template LaTeX
 
 def _build_latex(
     incident_id: str,
@@ -119,7 +117,7 @@ def _build_latex(
     Returns:
         String com o documento LaTeX completo.
     """
-    # ── Dados básicos ──────────────────────────────────────────────────
+    # Dados básicos
     dev_id   = _latex_escape(processed.device_id)
     worker   = _latex_escape(processed.worker_id)
     location = _latex_escape(processed.location_id)
@@ -130,7 +128,7 @@ def _build_latex(
     lel_mix  = _fmt_float(lel.lel_mix_percent, 4)
     risk_level_fmt = _fmt_risk_level(processed.alert_level)
 
-    # ── Tabela de leituras por gás ─────────────────────────────────────
+    # Tabela de leituras por gás
     readings_rows = ""
     for r in processed.readings:
         gas_name = GAS_CONFIG.get(r.gas_id, {}).get("name", r.gas_id)
@@ -143,7 +141,7 @@ def _build_latex(
             f"{lel_individual} & {raw_pct} & {filt_pct} & {contrib}\\% \\\\\n"
         )
 
-    # ── Tabela de histórico de alertas ────────────────────────────────
+    # Tabela de histórico de alertas
     history_rows = ""
     alert_icons = {
         "NORMAL":    "--",
@@ -163,7 +161,7 @@ def _build_latex(
             f"{r_val}\\% \\\\\n"
         )
 
-    # ── Gráfico (se disponível) ────────────────────────────────────────
+    # Gráfico (se disponível)
     # No LaTeX, o caminho usa / mesmo no Windows, e é relativo ao .tex
     chart_include = ""
     if chart_path and os.path.exists(chart_path):
@@ -181,7 +179,7 @@ def _build_latex(
 \end{figure}"""
         )
 
-    # ── Documento completo ─────────────────────────────────────────────
+    # Documento completo
     doc = rf"""% SafeGas Monitor — Laudo Técnico de Incidente
 % Gerado automaticamente em {generated_at}
 % ID do Incidente: {incident_id}
@@ -228,7 +226,7 @@ def _build_latex(
 
 \begin{{document}}
 
-% ─── Cabeçalho institucional ─────────────────────────────────────────────────
+% --- Cabeçalho institucional -------------------------------------------------
 \begin{{center}}
     {{\Large\bfseries\color{{headerblue}} LAUDO TÉCNICO DE INCIDENTE}}\\[4pt]
     {{\large\bfseries Sistema SafeGas Monitor}}\\[2pt]
@@ -241,7 +239,7 @@ def _build_latex(
 \noindent\rule{{\linewidth}}{{1.5pt}}
 \vspace{{6pt}}
 
-% ─── 1. Dados do Incidente ───────────────────────────────────────────────────
+% --- 1. Dados do Incidente ---------------------------------------------------
 \section{{Dados do Incidente}}
 
 \begin{{table}}[H]
@@ -265,7 +263,7 @@ def _build_latex(
 \caption{{Dados do evento cr\'itico detectado.}}
 \end{{table}}
 
-% ─── 2. Leituras dos Sensores ────────────────────────────────────────────────
+% --- 2. Leituras dos Sensores ------------------------------------------------
 \section{{Leituras dos Sensores no Momento do Incidente}}
 
 \begin{{table}}[H]
@@ -282,7 +280,7 @@ def _build_latex(
          Contribui\c{{c}}\~ao calculada por Le Chatelier: $C_i / \mathrm{{LEL}}_{{i,T}}$.}}
 \end{{table}}
 
-% ─── 3. Cálculo LEL (Le Chatelier + Zabetakis) ───────────────────────────────
+% --- 3. Cálculo LEL (Le Chatelier + Zabetakis) -------------------------------
 \section{{C\'alculo do $\mathrm{{LEL}}_{{mix}}$ (Le Chatelier com Corre\c{{c}}\~ao de Zabetakis)}}
 
 \subsection*{{Equa\c{{c}}\~oes Aplicadas}}
@@ -322,7 +320,7 @@ def _build_latex(
 \caption{{Resumo do c\'alculo de risco com corre\c{{c}}\~ao de temperatura.}}
 \end{{table}}
 
-% ─── 4. Histórico de Alertas ─────────────────────────────────────────────────
+% --- 4. Histórico de Alertas -------------------------------------------------
 \section{{Hist\'orico de Alertas (\'Ultimos {len(recent)} Eventos)}}\
 
 \begin{{longtable}}{{lllr}}
@@ -343,7 +341,7 @@ def _build_latex(
 
 {chart_include}
 
-% ─── 5. Ações Recomendadas ───────────────────────────────────────────────────
+% --- 5. Ações Recomendadas ---------------------------------------------------
 \section{{A\c{{c}}\~oes Recomendadas}}
 
 \begin{{enumerate}}
@@ -356,7 +354,7 @@ def _build_latex(
     \item \textbf{{Registro formal}} do ocorrido no sistema de gest\~ao de EHS.
 \end{{enumerate}}
 
-% ─── Rodapé ──────────────────────────────────────────────────────────────────
+% --- Rodapé ------------------------------------------------------------------
 \vspace{{20pt}}
 \noindent\rule{{\linewidth}}{{0.4pt}}
 
@@ -381,7 +379,7 @@ Projetos em Engenharia I — UNIVAP. Não substitui laudo técnico oficial.}}
     return doc
 
 
-# ─── Gerador Principal ────────────────────────────────────────────────────────
+# Gerador Principal
 
 class LatexReportGenerator:
     """

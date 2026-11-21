@@ -1,5 +1,5 @@
 """
-SafeGas Monitor — Filtros Digitais — Etapa 4
+SafeGas Monitor — Filtros Digitais
 =============================================
 Implementa dois filtros para suavização do sinal bruto dos sensores:
 
@@ -38,7 +38,7 @@ from config.settings import (
 log = logging.getLogger(__name__)
 
 
-# ─── Filtro de Média Móvel Simples ────────────────────────────────────────────
+# Filtro de Média Móvel Simples
 
 class MovingAverageFilter:
     """
@@ -121,7 +121,7 @@ class MovingAverageFilter:
         )
 
 
-# ─── Filtro de Kalman Escalar (1D) ────────────────────────────────────────────
+# Filtro de Kalman Escalar (1D)
 
 class KalmanFilter1D:
     """
@@ -201,14 +201,14 @@ class KalmanFilter1D:
             self._sample_count += 1
             return self._x
 
-        # ── Etapa de Predição ──────────────────────────────────────
+        # Etapa de Predição
         x_pred = self._x            # modelo: estado constante no curto prazo
         P_pred = self._P + self._Q  # incerteza cresce sem medição
 
-        # ── Ganho de Kalman ────────────────────────────────────────
+        # Ganho de Kalman
         K = P_pred / (P_pred + self._R)   # 0 ≤ K ≤ 1
 
-        # ── Etapa de Atualização ───────────────────────────────────
+        # Etapa de Atualização
         innovation = measurement - x_pred           # resíduo (inovação)
         self._x = x_pred + K * innovation           # nova estimativa
         self._P = (1.0 - K) * P_pred                # nova covariância

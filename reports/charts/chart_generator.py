@@ -1,5 +1,5 @@
 """
-SafeGas Monitor — Gerador de Gráficos para Laudos — Etapa 7
+SafeGas Monitor — Gerador de Gráficos para Laudos
 =============================================================
 Gera gráficos matplotlib (PNG) a partir do histórico de leituras
 de um EPI, para serem embutidos no laudo LaTeX.
@@ -96,7 +96,7 @@ class IncidentChartGenerator:
             n = len(history)
             t_axis = list(range(n))
 
-            # ── Coleta dados por gás ──────────────────────────────────
+            # Coleta dados por gás
             gases_present = sorted({
                 r.gas_id
                 for p in history
@@ -118,7 +118,7 @@ class IncidentChartGenerator:
                     )
                 risk_series.append(p.risk_ratio_percent)
 
-            # ── Layout ───────────────────────────────────────────────
+            # Layout
             plt.style.use("seaborn-v0_8-whitegrid")
             fig = plt.figure(figsize=(14, 9))
             fig.patch.set_facecolor("#FAFAFA")
@@ -133,7 +133,7 @@ class IncidentChartGenerator:
             gs = gridspec.GridSpec(2, 1, hspace=0.40, figure=fig,
                                    height_ratios=[2, 1])
 
-            # ── Painel 1: Concentrações ───────────────────────────────
+            # Painel 1: Concentrações
             ax1 = fig.add_subplot(gs[0])
 
             for g in gases_present:
@@ -169,7 +169,7 @@ class IncidentChartGenerator:
                      "CRÍTICO", ha="right", fontsize=8, color="#C0392B",
                      fontweight="bold")
 
-            # ── Painel 2: Fator de risco R ────────────────────────────
+            # Painel 2: Fator de risco R
             ax2 = fig.add_subplot(gs[1], sharex=ax1)
 
             # Zonas coloridas

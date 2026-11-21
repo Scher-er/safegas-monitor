@@ -1,5 +1,5 @@
 """
-SafeGas Monitor — Repositório SQLite — Etapa 6
+SafeGas Monitor — Repositório SQLite
 ===============================================
 Persistência relacional para cadastros institucionais.
 Usa o módulo sqlite3 da biblioteca padrão do Python — sem dependências extras.
@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 _SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "schema.sql")
 
 
-# ─── Dataclasses de domínio ───────────────────────────────────────────────────
+# Dataclasses de domínio
 
 @dataclass
 class DeviceRecord:
@@ -78,7 +78,7 @@ class AssignmentRecord:
     returned_at: Optional[str] = None
 
 
-# ─── Base ─────────────────────────────────────────────────────────────────────
+# Base
 
 class SQLiteRepository:
     """
@@ -161,7 +161,7 @@ class SQLiteRepository:
         self.close()
 
 
-# ─── DeviceRepository ─────────────────────────────────────────────────────────
+# DeviceRepository
 
 class DeviceRepository(SQLiteRepository):
     """CRUD de EPIs (tabela 'devices')."""
@@ -246,7 +246,7 @@ class DeviceRepository(SQLiteRepository):
         return cursor.rowcount > 0
 
 
-# ─── WorkerRepository ─────────────────────────────────────────────────────────
+# WorkerRepository
 
 class WorkerRepository(SQLiteRepository):
     """CRUD de funcionários (tabela 'workers')."""
@@ -314,7 +314,7 @@ class WorkerRepository(SQLiteRepository):
         ]
 
 
-# ─── LocationRepository ───────────────────────────────────────────────────────
+# LocationRepository
 
 class LocationRepository(SQLiteRepository):
     """CRUD de locais de risco (tabela 'locations')."""
@@ -374,7 +374,7 @@ class LocationRepository(SQLiteRepository):
         ]
 
 
-# ─── AssignmentRepository ─────────────────────────────────────────────────────
+# AssignmentRepository
 
 class AssignmentRepository(SQLiteRepository):
     """Atribuições EPI ↔ Funcionário (tabela 'assignments')."""

@@ -1,5 +1,5 @@
 """
-SafeGas Monitor — Simulador de EPI (Etapa 2)
+SafeGas Monitor — Simulador de EPI
 =============================================
 Implementa a simulação de sensores eletroquímicos de gás com:
   - Sinal base configurável (constante, rampa ou senoidal)
@@ -39,11 +39,11 @@ from config.settings import (
 )
 from config.data_contracts import TelemetryPacket, GasReading
 
-# ─── Logger do módulo ─────────────────────────────────────────────────────────
+# Logger do módulo
 log = logging.getLogger(__name__)
 
 
-# ─── Tipos de sinal base ──────────────────────────────────────────────────────
+# Tipos de sinal base
 class SignalProfile(Enum):
     """Perfil do sinal de concentração base ao longo do tempo."""
     CONSTANT            = "constant"             # concentração fixa (cenário estável)
@@ -57,7 +57,7 @@ class SignalProfile(Enum):
     INTERMITTENT_BURSTS = "intermittent_bursts"  # pulsos e micro-vazamentos intermitentes de válvulas
 
 
-# ─── Sensor individual ────────────────────────────────────────────────────────
+# Sensor individual
 class GasSensorSimulator:
     """
     Simula um sensor eletroquímico/catalítico de gás com:
@@ -217,7 +217,7 @@ class GasSensorSimulator:
 
         Returns:
             GasReading com campos raw_percent e raw_ppm preenchidos.
-            Os campos filtered_* serão preenchidos pela Central (Etapa 4).
+            Os campos filtered_* serão preenchidos pela Central.
         """
         c_base = self._compute_base()
 
@@ -267,7 +267,7 @@ class GasSensorSimulator:
         )
 
 
-# ─── Simulador completo do EPI ────────────────────────────────────────────────
+# Simulador completo do EPI
 class EPISimulator:
     """
     Simula um EPI completo com múltiplos sensores de gás e sensor de temperatura.
@@ -607,7 +607,7 @@ class EPISimulator:
         )
 
 
-# ─── Demo standalone ──────────────────────────────────────────────────────────
+# Demo standalone
 def _demo_print(packet: TelemetryPacket) -> None:
     """Callback de demonstração: imprime o pacote no terminal."""
     ts = packet.timestamp[11:19]  # HH:MM:SS
@@ -623,7 +623,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
     print("=" * 65)
-    print(" SafeGas Monitor — Demo do Simulador de EPI (Etapa 2)")
+    print(" SafeGas Monitor — Demo do Simulador de EPI")
     print("=" * 65)
     print(" Cenário: CH4 com rampa de vazamento + CO constante baixo")
     print(" Ctrl+C para parar\n")

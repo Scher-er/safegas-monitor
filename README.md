@@ -1,338 +1,312 @@
-# SafeGas Monitor 🛢️🔥
+# SafeGas Monitor
 
-> **Disciplina:** Projetos em Engenharia de Software / Engenharia da Computação — UNIVAP 2026  
-> **Objetivo:** Sistema integrado de software para monitoramento em tempo real de atmosferas industriais potencialmente explosivas (LEL/LIE) através de múltiplos EPIs (Equipamentos de Proteção Individual) portáteis inteligentes.
-
-[![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
-[![MQTT](https://img.shields.io/badge/MQTT-v2.0%20(1883)-orange.svg)](https://mqtt.org/)
-[![Flask](https://img.shields.io/badge/Flask-3.x-green.svg)](https://flask.palletsprojects.com/)
-[![SQLite](https://img.shields.io/badge/SQLite-3-lightgrey.svg)](https://www.sqlite.org/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-7.x%20(NoSQL)-forestgreen.svg)](https://www.mongodb.com/)
-[![LaTeX](https://img.shields.io/badge/LaTeX-PDF%20Reports-darkblue.svg)](https://www.latex-project.org/)
-[![Rich](https://img.shields.io/badge/Rich-Live%20TUI-purple.svg)](https://github.com/Textualize/rich)
+**Disciplina:** Projetos em Engenharia de Software / Engenharia da Computação — UNIVAP (2026)  
+**Resumo:** Plataforma de monitoramento em tempo real para detecção de atmosferas potencialmente explosivas (LEL/LIE) em ambientes industriais e espaços confinados, integrando telemetria IoT via MQTT, filtragem digital de sinais, persistência híbrida (SQLite e MongoDB) e emissão automatizada de laudos técnicos em PDF via LaTeX.
 
 ---
 
-## 📑 Sumário
+## Sumário
 
-- [Visão Geral](#-visão-geral)
-- [Arquitetura do Sistema](#️-arquitetura-do-sistema)
-- [Stack Tecnológica](#-stack-tecnológica)
-- [Gases Monitorados e Limites Físicos](#-gases-monitorados-e-limites-físicos)
-- [Classificação de Risco e Limiares de Alerta](#-classificação-de-risco-e-limiares-de-alerta)
-- [Modelagem Matemática e Física](#-modelagem-matemática-e-física)
-  - [Equação de Le Chatelier (LEL de Misturas)](#equação-de-le-chatelier-lel-de-misturas)
-  - [Correção Térmica de Zabetakis](#correção-térmica-de-zabetakis)
-  - [Física Avançada do Simulador de EPI](#física-avançada-do-simulador-de-epi)
-- [Interfaces de Usuário](#-interfaces-de-usuário)
-  - [Web Dashboard (Flask + Chart.js)](#1-web-dashboard-tempo-real-flask--chartjs)
-  - [Terminal UI (Rich Live)](#2-terminal-ui-rich-tui)
-- [Como Executar](#-como-executar)
-  - [Pré-requisitos](#pré-requisitos)
-  - [Instalação das Dependências](#1-instalação-das-dependências)
-  - [Configuração de Credenciais de E-mail (Opcional)](#2-configuração-de-credenciais-de-e-mail-opcional)
-  - [Inicialização do Sistema](#3-inicialização-do-sistema)
-- [Testes Automatizados](#-testes-automatizados)
-- [Estrutura do Repositório](#-estrutura-do-repositório)
-- [Segurança e Resiliência](#-segurança-e-resiliência)
+1. [Visão Geral](#visão-geral)
+2. [Arquitetura e Fluxo de Dados](#arquitetura-e-fluxo-de-dados)
+3. [Tecnologias Utilizadas](#tecnologias-utilizadas)
+4. [Gases Monitorados e Limiares de Risco](#gases-monitorados-e-limiares-de-risco)
+5. [Fundamentação Matemática e Simulação Física](#fundamentação-matemática-e-simulação-física)
+6. [Interfaces de Operação](#interfaces-de-operação)
+7. [Instalação e Execução](#instalação-e-execução)
+8. [Suíte de Testes](#suíte-de-testes)
+9. [Estrutura de Diretórios](#estrutura-de-diretórios)
 
 ---
 
-## 🎯 Visão Geral
+## Visão Geral
 
-O **SafeGas Monitor** é uma plataforma que atua como **Central de Comando Industrial** conectada a múltiplos detectores multigás de EPI portáteis via rede sem fio IoT (protocolo MQTT). O sistema recebe telemetria contínua, filtra sinais ruidosos em tempo real com **Filtro de Kalman**, calcula o risco explosivo composto (\(LEL_{\text{mix}}\)) sob a **Lei de Le Chatelier** com compensação de temperatura de **Zabetakis**, gerencia cadastros institucionais de funcionários e áreas de risco em banco relacional **SQLite**, persiste telemetria histórica em **MongoDB**, e gera laudos periciais automáticos compilados em **PDF via LaTeX**, disparando notificações por e-mail via **SMTP** em caso de emergência crítica.
+O **SafeGas Monitor** foi projetado para supervisionar múltiplos detectores multigás portáteis acoplados ao Equipamento de Proteção Individual (EPI) de trabalhadores em campo. O software cobre toda a infraestrutura de processamento da Central de Comando que dará suporte ao protótipo físico embarcado.
+
+A solução processa leituras contínuas de concentração gasosa e temperatura ambiente a 1 Hz por dispositivo. Para evitar alarmes falsos causados pela instabilidade eletroquímica natural dos sensores, o sistema aplica um **Filtro de Kalman escalar (1D)** antes de calcular o Limite Inferior de Explosividade da mistura ($LEL_{\text{mix}}$) pela **Lei de Le Chatelier**, ajustado termodinamicamente pela equação de **Zabetakis**.
+
+Quando o índice de risco atinge ou ultrapassa 50% do $LEL_{\text{mix}}$ (nível crítico), a Central aciona automaticamente o protocolo de emergência: compila um laudo pericial em PDF contendo o histórico e as curvas de dispersão geradas via Matplotlib/LaTeX e envia o documento por e-mail via SMTP ao responsável de segurança.
 
 ---
 
-## 🏗️ Arquitetura do Sistema
+## Arquitetura e Fluxo de Dados
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                   DISPOSITIVOS / EPIs EM CAMPO                         │
-│   EPI-001 (Vazamento)   EPI-002 (Baseline)   EPI-004 (Novo Dinâmico)   │
-│   Física Estocástica    Ornstein-Uhlenbeck   Inércia de Membrana τ90   │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │ Telemetria JSON (1.0 Hz)
-                                    ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                  BROKER MQTT LOCAL (Porta 1883)                        │
-│                 Tópico: safegas/telemetry/<device_id>                  │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │ Subscrição contínua
-                                    ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                 CENTRAL DE COMANDO (PipelineHandler)                   │
-│                                                                        │
-│  1. Filtragem Digital       ──► Filtro de Kalman 1D + Média Móvel      │
-│  2. Cálculo Explosividade   ──► Le Chatelier (LEL_mix) + Zabetakis     │
-│  3. Motor de Alertas        ──► NORMAL | ATTENTION | WARNING | CRITICAL│
-│  4. Persistência Relacional ──► SQLite (EPIs, Colaboradores, Locais)   │
-│  5. Persistência NoSQL      ──► MongoDB (Séries Temporais e Incidentes)│
-│  6. Emissão de Laudos       ──► Compilação LaTeX → PDF + Gráficos      │
-│  7. Notificador             ──► E-mail SMTP com PDF + Webhooks         │
-└─────────────────────┬──────────────────────────────────┬───────────────┘
-                      │                                  │
-                      ▼                                  ▼
-      ┌───────────────────────────────┐  ┌───────────────────────────────┐
-      │     DASHBOARD WEB (Flask)     │  │     TERMINAL TUI (Rich)       │
-      │    http://localhost:8000      │  │    Monitor ao vivo no shell   │
-      │  • Monitoramento em Tempo Real│  │  • Status por dispositivo     │
-      │  • Cadastro de EPI e Locais   │  │  • Vazão de pacotes (PPS)     │
-      │  • Pop-up de Ativação Rápida  │  │  • Histórico de eventos       │
-      │  • Ajuste de E-mail de Alerta │  │  • Log de incidentes         │
-      └───────────────────────────────┘  └───────────────────────────────┘
+O sistema adota uma arquitetura desacoplada baseada no padrão *Publish/Subscribe* sobre o protocolo MQTT:
+
+```mermaid
+flowchart TD
+    subgraph Campo ["Camada de Sensoriamento (EPIs)"]
+        EPI1["EPI-001 (Vazamento Dinâmico)"]
+        EPI2["EPI-002 (Baseline Estocástico)"]
+        EPIN["EPI-N (Dispositivos Cadastrados)"]
+    end
+
+    subgraph Broker ["Mensageria IoT"]
+        MQTT["Broker MQTT Local (Porta 1883)<br/>Tópico: safegas/telemetry/+"]
+    end
+
+    subgraph Central ["Central de Comando (PipelineHandler)"]
+        KF["Filtragem Digital<br/>(Filtro de Kalman 1D / Média Móvel)"]
+        LEL["Cálculo Termodinâmico<br/>(Le Chatelier + Zabetakis)"]
+        AL["Classificador de Risco<br/>(NORMAL | ATTENTION | WARNING | CRITICAL)"]
+    end
+
+    subgraph Dados ["Camada de Persistência e Laudos"]
+        SQL[("SQLite 3<br/>Cadastros, Alocações e Configs")]
+        MONGO[("MongoDB 7.x<br/>Séries Temporais e Incidentes")]
+        LATEX["Gerador de Laudos (LaTeX -> PDF)<br/>+ Notificador SMTP / Webhook"]
+    end
+
+    subgraph UI ["Interfaces de Supervisão"]
+        WEB["Web Dashboard (Flask - Porta 8000)"]
+        TUI["Terminal Dashboard (Rich TUI)"]
+    end
+
+    EPI1 & EPI2 & EPIN -->|JSON 1 Hz| MQTT
+    MQTT --> KF --> LEL --> AL
+    AL --> MONGO
+    AL <--> SQL
+    AL -->|Se R >= 50%| LATEX
+    AL --> WEB & TUI
+    WEB -->|Cadastro e Ativação Dinâmica| SQL
+    WEB -->|Controle de Simulação| Campo
 ```
 
+### Etapas do Pipeline Central
+
+1. **Ingestão MQTT (`central_command/server.py`)**: O servidor assina o tópico curinga `safegas/telemetry/#`, desserializa os pacotes JSON em objetos `TelemetryPacket` e mantém o controle de sessão por equipamento.
+2. **Filtragem Digital (`central_command/filters/`)**: Mantém instâncias independentes de `KalmanFilter1D` e `MovingAverageFilter` para cada par `(device_id, gas_id)`, atenuando o ruído branco de medição sem introduzir atraso de fase severo.
+3. **Cálculo de Explosividade (`central_command/lel/`)**: Aplica a correção térmica sobre o LEL individual de cada gás presente e determina o $LEL_{\text{mix}}$ da mistura e a taxa percentual de risco $R$.
+4. **Enriquecimento Relacional (`database/sql/`)**: Associa em tempo real o ID do equipamento ao nome do colaborador, função, local de operação e status de calibração cadastrados no SQLite (com cache em memória para baixa latência).
+5. **Persistência e Auditoria (`database/nosql/` e `reports/`)**: Armazena as leituras processadas no MongoDB e, em ocorrências críticas, aciona a geração assíncrona do laudo técnico e o envio de e-mail com controle de *cooldown*.
+
 ---
 
-## 📦 Stack Tecnológica
+## Tecnologias Utilizadas
 
-| Componente | Tecnologia | Finalidade no Projeto |
+| Camada | Tecnologia / Biblioteca | Descrição |
 |---|---|---|
-| **Linguagem Base** | Python 3.11+ | Desenvolvimento de toda a camada de processamento e servidores |
-| **Mensageria IoT** | MQTT (`paho-mqtt` + `amqtt`) | Protocolo assíncrono pub/sub para telemetria leve dos EPIs (porta 1883) |
-| **Filtros Digitais** | NumPy | Implementação do Filtro de Kalman 1D e Filtro de Média Móvel |
-| **Banco Relacional** | SQLite 3 (`sqlite3` stdlib) | Gestão institucional de dispositivos, colaboradores, áreas de risco e configurações |
-| **Banco NoSQL** | MongoDB 7.x (`pymongo`) | Armazenamento de séries temporais de telemetria bruta/processada e incidentes |
-| **Web Dashboard** | Flask 3.x + Chart.js | Interface web responsiva para supervisão ao vivo, cadastros e parametrização |
-| **Terminal TUI** | Rich Live | Painel interativo de alta performance no terminal para a equipe de TI/operação |
-| **Laudos Periciais** | LaTeX + Jinja2 + pdfLaTeX | Geração automatizada de documentos técnicos comprobatórios em formato PDF |
-| **Gráficos** | Matplotlib | Renderização de curvas de evolução temporal de gases anexadas aos laudos |
-| **Notificações** | SMTP (`smtplib`) + Requests | Transmissão de alertas críticos com anexo em PDF e acionamento de webhooks |
+| Linguagem | Python 3.11+ | Núcleo da aplicação, tipagem com `dataclasses` e concorrência via `threading` |
+| Mensageria | `paho-mqtt` / `amqtt` | Cliente e broker MQTT embarcado na porta `1883` |
+| Processamento Numérico | `numpy` | Geração estocástica, cálculo vetorial e filtragem digital |
+| Banco de Dados Relacional | `sqlite3` (stdlib) | Persistência de EPIs, funcionários, locais de risco, alocações e parâmetros |
+| Banco de Dados NoSQL | `pymongo` (MongoDB) | Persistência de alta frequência para telemetria e registro de incidentes |
+| Interface Web e API | `flask` + HTML/CSS/JS | Dashboard web na porta `8000` e endpoints REST de gerenciamento |
+| Interface de Terminal | `rich` | Monitoramento em modo texto (TUI) atualizado a 4 FPS no console |
+| Relatórios e Gráficos | `matplotlib` + `pdflatex` | Plotagem do histórico de concentração e compilação automática de laudos PDF |
+| Notificações Externas | `smtplib` + `requests` | Disparo de e-mails com laudo PDF anexado e integração via Webhook HTTP |
 
 ---
 
-## 📊 Gases Monitorados e Limites Físicos
+## Gases Monitorados e Limiares de Risco
 
-Os limites inferiores (*LEL*) e superiores (*UEL*) de inflamabilidade são definidos com base nas normas **ABNT NBR IEC 60079-29-1**, **NR-33** e **NFPA 325**:
+Os parâmetros de inflamabilidade seguem as referências normativas **ABNT NBR IEC 60079-29-1**, **NR-33** e **NFPA 325**:
 
-| Fórmula | Nome Comum | LEL (% v/v) | UEL (% v/v) | Risco Primário |
-|:---:|:---|:---:|:---:|:---|
-| **$\text{CH}_4$** | Metano (Gás Natural) | **5.0%** | 15.0% | Asfixia e explosão violenta |
-| **$\text{CO}$** | Monóxido de Carbono | **12.5%** | 74.0% | Altamente tóxico e inflamável |
-| **$\text{H}_2\text{S}$** | Gás Sulfídrico | **4.0%** | 44.0% | Tóxico letal em ppm baixos e combustível |
-| **$\text{C}_3\text{H}_8$** | Propano (Fração GLP) | **2.1%** | 9.5% | Gás denso, acúmulo no solo, altamente explosivo |
-| **$\text{C}_4\text{H}_{10}$** | Butano (Fração GLP) | **1.8%** | 8.4% | Gás pesado, inflamabilidade extrema |
+| Identificador | Gás | LEL (% v/v) | UEL (% v/v) | Característica Principal |
+|---|---|---|---|---|
+| `CH4` | Metano | 5,0% | 15,0% | Principal componente do gás natural; inflamável e asfixiante em altas concentrações |
+| `CO` | Monóxido de Carbono | 12,5% | 74,0% | Gás tóxico inodoro resultante de combustão incompleta; inflamável em concentrações elevadas |
+| `H2S` | Gás Sulfídrico | 4,0% | 44,0% | Altamente tóxico e inflamável, comum em galerias subterrâneas e processos químicos |
+| `C3H8` | Propano (GLP) | 2,1% | 9,5% | Hidrocarboneto mais denso que o ar, tende a acumular-se em cotas baixas |
+| `C4H10` | Butano (GLP) | 1,8% | 8,4% | Baixo limite inferior de explosividade; alto risco de ignição |
 
----
+### Classificação de Alertas
 
-## ⚠️ Classificação de Risco e Limiares de Alerta
+A razão de risco $R = (C_{\text{mix}} / LEL_{\text{mix}}) \times 100\%$ define o estado operacional do equipamento:
 
-A Central avalia a taxa de risco composta:
-$$R = \left( \frac{C_{\text{mix}}}{LEL_{\text{mix}}} \right) \times 100\%$$
-
-| Nível de Alerta | Faixa de Risco $R$ | Sinalização na Central | Ação Operacional |
-|---|:---:|:---:|---|
-| **NORMAL** | $R < 10\%$ | 🟢 Verde | Operação segura. Monitoramento passivo contínuo. |
-| **ATTENTION** | $10\% \le R < 25\%$ | 🟡 Amarelo | Concentração detectada. Atenção redobrada e registro de evento. |
-| **WARNING** | $25\% \le R < 50\%$ | 🟠 Laranja | Alerta sonoro/visual. Aviso ao supervisor e inspeção de ventilação. |
-| **CRITICAL** | **$R \ge 50\%$** | 🔴 **Vermelho** | **Evacuação imediata! Compilação de laudo pericial PDF via LaTeX e envio urgente por e-mail.** |
+| Nível | Intervalo de Risco ($R$) | Comportamento do Sistema |
+|---|---|---|
+| `NORMAL` | $R < 10\%$ | Operação segura; registro contínuo de telemetria |
+| `ATTENTION` | $10\% \le R < 25\%$ | Registro no histórico de eventos da Central e destaque visual amarelo |
+| `WARNING` | $25\% \le R < 50\%$ | Alerta preventivo laranja indicando aproximação da zona de perigo |
+| `CRITICAL` | $R \ge 50\%$ | Alarme crítico vermelho, compilação do laudo LaTeX/PDF e envio imediato por e-mail |
 
 ---
 
-## 🔢 Modelagem Matemática e Física
+## Fundamentação Matemática e Simulação Física
 
-### Equação de Le Chatelier (LEL de Misturas)
-Para uma mistura gasosa contendo $n$ gases combustíveis em concentrações relativas $C_i$:
+### 1. Lei de Le Chatelier para Misturas Inflamáveis
 
-$$LEL_{\text{mix}} = \frac{100}{\sum_{i=1}^{n} \frac{C_i}{LEL_i}}$$
+Para uma atmosfera contendo múltiplos gases combustíveis simultâneos com concentrações individuais filtradas $C_i$ (% v/v), o Limite Inferior de Explosividade da mistura é dado por:
 
-### Correção Térmica de Zabetakis
-Conforme a temperatura ambiente se eleva, a energia necessária para ignição diminui, reduzindo o LEL e aumentando o perigo. A fórmula empírica de Zabetakis ajusta o limiar:
+$$LEL_{\text{mix}} = \frac{100}{\sum_{i=1}^{n} \frac{C_i}{LEL_{i,T}}}$$
 
-$$LEL_T = LEL_{25^\circ\text{C}} \times \left[ 1 - 0{,}08 \times \left( \frac{T - 25}{100} \right) \right]$$
+Onde $C_{\text{mix}} = \sum_{i=1}^{n} C_i$ e a razão de risco efetiva equivale a:
 
-### Física Avançada do Simulador de EPI
-Para superar simulações lineares artificiais, o módulo `epi_simulator` implementa modelos estocásticos e dinâmicos:
+$$R = \left( \frac{C_{\text{mix}}}{LEL_{\text{mix}}} \right) \times 100\% = \left( \sum_{i=1}^{n} \frac{C_i}{LEL_{i,T}} \right) \times 100\%$$
 
-1. **Vazamento Dinâmico Não-Linear (`DYNAMIC_LEAK`)**:
-   - Curva sigmoidal (polinômio cúbico de Hermite) modelando a liberação sob pressão e acúmulo volumétrico.
-   - Vórtices turbulentos (*convective eddies*) modelados por dinâmica autorregressiva com injeção estocástica.
-   - Baforadas aleatórias (*puffs*) e arraste de hidrocarbonetos secundários ($\text{C}_3\text{H}_8$ e $\text{C}_4\text{H}_{10}$).
-2. **Processo de Ornstein-Uhlenbeck (`STOCHASTIC_DRIFT`)**:
-   - Simula a atmosfera de um turno normal e seguro com reversão contínua à média e perturbações microclimáticas:
-     $$dX_t = \theta (\mu - X_t) dt + \sigma dW_t$$
-3. **Inércia Física da Membrana Sensora ($\tau_{90}$)**:
-   - Filtro passa-baixas de absorção molecular:
-     $$C_{\text{sensor}}[n] = \alpha C_{\text{inst}} + (1 - \alpha) C_{\text{sensor}}[n-1]$$
-   - Elimina variações instantâneas robóticas e reproduz a curva de resposta de sensores reais (como as séries MQ e Figaro).
-4. **Ciclos Operacionais com Ventilação (`CYCLIC_VENTING`)**:
-   - Elevação durante operações industriais seguida por decaimento exponencial rápido de exaustão HVAC ($e^{-k \cdot t}$).
-5. **Inércia Térmica Suave**:
-   - Modelagem de massa térmica com micro-deriva gradual.
+### 2. Correção Termodinâmica de Zabetakis
+
+O aumento da temperatura ambiente reduz a energia térmica necessária para a propagação de chama, diminuindo o LEL efetivo de cada gás em relação à referência de $25^\circ\text{C}$:
+
+$$LEL_{i,T} = LEL_{i,25^\circ\text{C}} \times \left[ 1 - 0{,}08 \times \left( \frac{T - 25}{100} \right) \right]$$
+
+### 3. Modelagem Estocástica dos Sensores (`epi_simulator`)
+
+Para reproduzir o comportamento físico de sensores eletroquímicos e catalíticos reais em diferentes regimes industriais, o simulador implementa quatro perfis dinâmicos combinados com inércia de difusão:
+
+* **`DYNAMIC_LEAK` (Vazamento Não-Linear com Turbulência)**: Modela a transição de um vazamento pressurizado por meio de uma curva sigmoidal (Hermite cúbica), somada a vórtices turbulentos autorregressivos (*convective eddies*), baforadas estocásticas (*puffs*) e arraste proporcional de hidrocarbonetos secundários (`C3H8` e `C4H10`).
+* **`STOCHASTIC_DRIFT` (Processo de Ornstein-Uhlenbeck)**: Modela a operação normal de campo com reversão contínua à média ($\theta$) e volatilidade ambiental ($\sigma$), evitando leituras estáticas ou artificiais:
+  $$dX_t = \theta (\mu - X_t)\,dt + \sigma\,dW_t$$
+* **`CYCLIC_VENTING` (Ciclo Operacional com Exaustão)**: Simula ambientes com liberação periódica de gases seguida de varredura exponencial ($e^{-k \cdot t}$) acionada por sistemas de ventilação forçada (HVAC).
+* **`INTERMITTENT_BURSTS` (Micro-Vazamentos Transitórios)**: Emula fugas rápidas decorrentes de abertura de válvulas ou purgadores.
+* **Inércia de Membrana ($\tau_{90}$) e Inércia Térmica**: Todas as leituras passam por um filtro físico de primeira ordem que representa o tempo de difusão molecular na cápsula porosa do sensor.
 
 ---
 
-## 🖥️ Interfaces de Usuário
+## Interfaces de Operação
 
-### 1. Web Dashboard em Tempo Real (Flask + Chart.js)
-Disponível em `http://localhost:8000`:
-- **📡 Em Monitoramento**:
-  - Indicadores globais em tempo real (Uptime, Dispositivos Ativos, Vazão de Pacotes PPS e Incidentes Críticos).
-  - Tabela dinâmica de EPIs conectados exibindo última leitura, colaborador, risco percentual $R$, nível de alerta e temperatura.
-  - Painéis de **Histórico de Eventos Recentes** e **Incidentes Críticos com Laudos Emitidos**.
-- **📋 Cadastrados no SQLite**:
-  - Listagem completa dos equipamentos registrados no banco relacional institucional.
-  - Indicador de status de transmissão em tempo real (`● Ativo` ou botão `▶ Iniciar` para colocar qualquer EPI em funcionamento avulso).
-- **➕ Cadastro de Novos Equipamentos com Pop-up Interativo**:
-  - Registro de novos detectores na base institucional com vínculo a funcionários e locais de risco.
-  - **Pop-up de Decisão Imediata**: Ao salvar o equipamento, o sistema pergunta ao operador se deseja adicioná-lo à tela principal e iniciar sua simulação e monitoramento ao vivo imediatamente. Ao confirmar, o backend ativa a telemetria do EPI e redireciona diretamente para o monitoramento ao vivo!
-- **⚙️ Configuração Dinâmica de E-mail de Emergência**:
-  - Modal para alterar em tempo real o e-mail que receberá os laudos em PDF compilados nos incidentes críticos (persistido no banco SQLite).
+### 1. Web Dashboard (`http://localhost:8000`)
 
-### 2. Terminal UI (Rich TUI)
-Executado diretamente no console onde a Central é iniciada:
-- Layout responsivo com atualização em 4 FPS via `rich.live`.
-- Monitoramento de conexões de clientes MQTT.
-- Indicador visual colorido por código de alerta ANSI.
+Servido pelo Flask em `api/server.py`, o painel web oferece:
+* **Aba Em Monitoramento**: Cartões de indicadores globais (tempo de atividade, dispositivos ativos, taxa de pacotes por segundo e total de laudos emitidos), tabela ao vivo de EPIs com atualização a cada 500 ms, histórico de eventos e lista de incidentes críticos.
+* **Aba Cadastrados no SQLite**: Visualização de todos os detectores registrados no banco relacional, status de calibração, colaborador vinculado, local de risco e controle individual para iniciar a simulação de qualquer equipamento (`Iniciar`).
+* **Cadastro Interativo de Equipamentos**: Modal para inclusão de novos EPIs com atribuição imediata a funcionários e áreas de risco. Após o registro, um modal de confirmação permite adicionar o equipamento diretamente à tela principal e iniciar sua transmissão MQTT em tempo real.
+* **Configuração de E-mail de Alerta**: Modal para atualização dinâmica do endereço de e-mail destinatário dos laudos periciais em PDF (valor persistido na tabela `system_settings` do SQLite).
+
+### 2. Terminal Dashboard (`ui/tui/`)
+
+Construído com a biblioteca `rich`, exibe diretamente no console da Central o estado sincronizado das conexões, a tabela de risco por colaborador e os alertas recentes, ideal para acompanhamento local no servidor.
 
 ---
 
-## 🚀 Como Executar
+## Instalação e Execução
 
 ### Pré-requisitos
-* **Python 3.11+** instalado e adicionado ao `PATH`.
-* **LaTeX (MiKTeX ou TeX Live)** *(Opcional, mas recomendado)*: Necessário para compilar laudos em PDF (`pdflatex`). Caso não esteja instalado, o sistema opera em modo de contingência gerando o código-fonte `.tex`.
-* **MongoDB 7.x** *(Opcional)*: O sistema possui modo degradado automático. Se o MongoDB não estiver ativo, a Central continuará operando normalmente em memória e SQLite.
 
-### 1. Instalação das Dependências
-No terminal, dentro da pasta do projeto:
+* **Python 3.11** ou superior.
+* **Distribuição LaTeX (MiKTeX ou TeX Live)** *(opcional)*: Utilizada pelo comando `pdflatex` para compilar os arquivos `.tex` em `.pdf`. Caso não esteja instalada, o sistema salva o código-fonte `.tex` completo sem interromper a execução.
+* **MongoDB 7.x** *(opcional)*: Caso o serviço local do MongoDB na porta `27017` não esteja ativo, o repositório NoSQL entra automaticamente em **modo degradado**, mantendo todas as funcionalidades em memória e no SQLite.
+
+### 1. Instalar Dependências
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configuração de Credenciais de E-mail (Opcional)
-Para habilitar o envio real de laudos técnicos em PDF por e-mail via SMTP (Gmail):
-1. Copie o arquivo de exemplo:
+### 2. Configurar Credenciais de E-mail (Opcional)
+
+Para habilitar o envio real de e-mails via SMTP (Gmail) nos alertas críticos:
+
+1. Copie o arquivo de modelo:
    ```bash
    cp config/secrets.py.example config/secrets.py
    ```
-2. Abra `config/secrets.py` e configure seu e-mail e sua Senha de Aplicativo Google:
+2. Edite `config/secrets.py` com seu endereço Gmail e uma Senha de Aplicativo de 16 caracteres gerada na sua Conta Google:
    ```python
    SMTP_USER = "seu_email@gmail.com"
-   SMTP_PASS = "sua_senha_de_aplicativo_aqui"
+   SMTP_PASS = "sua_senha_de_aplicativo"
    ```
-*(O arquivo `config/secrets.py` está protegido no `.gitignore` e nunca será enviado ao GitHub).*
+*(O arquivo `config/secrets.py` está listado no `.gitignore` para evitar exposição de credenciais).*
 
-### 3. Inicialização do Sistema
+### 3. Iniciar o Sistema Completo
 
-#### Opção A — Execução Rápida via Script (Windows)
-Basta dar um duplo clique no arquivo:
+#### No Windows (Atalho Automatizado)
+Execute o script de lote na raiz do projeto:
 ```cmd
 start_safegas.bat
 ```
-*O script abre automaticamente o navegador em `http://localhost:8000` e inicializa de forma integrada o Broker MQTT, a Central de Comando com Rich TUI, o Servidor Web Flask e o Gerenciador de Simulações.*
 
-#### Opção B — Execução via Linha de Comando
+#### Via Terminal (Multiplataforma)
 ```bash
 python run_central.py
 ```
-Em seguida, acesse no navegador: [http://localhost:8000](http://localhost:8000)
 
-> **Encerramento Limpo:** Pressione `Ctrl + C` na janela do terminal para finalizar todos os serviços de forma graciosa. O sistema encerra as conexões MQTT e os subprocessos sem deixar processos zumbis na memória.
+O comando `run_central.py` inicializa de forma coordenada:
+1. O broker MQTT local em segundo plano (`mqtt_broker.py` na porta `1883`);
+2. O gerenciador multi-dispositivo `SimulationManager`, carregando os EPIs ativos do SQLite (`EPI-001` em cenário de vazamento progressivo e `EPI-002` em operação estável);
+3. O subscriber MQTT da Central de Comando (`CentralCommandServer`) e o `PipelineHandler`;
+4. O servidor web Flask em `http://127.0.0.1:8000`;
+5. A interface Rich TUI no terminal.
+
+Para encerrar todos os serviços e liberar as portas de rede de forma limpa, pressione `Ctrl+C` no terminal.
 
 ---
 
-## 🧪 Testes Automatizados
+## Suíte de Testes
 
-O projeto conta com baterias de testes unitários e de integração organizados por etapa de desenvolvimento:
+Os testes automatizados validam cada módulo do sistema de forma independente e integrada:
 
 ```bash
-# Teste da Etapa 1 — Sanidade da arquitetura e contratos
+# 1. Contratos de dados, serialização JSON e estrutura do projeto
 python tests/test_etapa1.py
 
-# Teste da Etapa 2 — Simulador de EPI (física, ruído gaussiano, limites e cenários)
+# 2. Simulador de sensores, limites físicos e perfis de sinal
 python tests/test_etapa2.py
 
-# Teste da Etapa 4 — Filtros digitais (Kalman e Média Móvel)
+# 3. Mensageria MQTT, roteamento de sessões e SimulationManager
+python tests/test_etapa3.py
+
+# 4. Filtros digitais (Média Móvel e Filtro de Kalman 1D)
 python tests/test_etapa4.py
 
-# Teste da Etapa 5 — Cálculo LEL_mix e motor de alertas
+# 5. Cálculo de LEL (Le Chatelier + Zabetakis) e motor de alertas
 python tests/test_etapa5.py
 
-# Teste da Etapa 6 — Persistência relacional SQLite e NoSQL MongoDB
+# 6. Persistência relacional (SQLite) e NoSQL (MongoDB com fallback)
 python tests/test_etapa6.py
 
-# Teste da Etapa 7 — Geração de laudos técnicos LaTeX e PDF
+# 7. Geração de gráficos Matplotlib e compilação de laudos LaTeX
 python tests/test_etapa7.py
 
-# Teste da Etapa 8 — Concorrência e estado compartilhado da TUI
+# 8. Gerenciamento de estado thread-safe e renderização da TUI
 python tests/test_etapa8.py
 
-# Demonstração standalone do simulador no terminal
-python -m epi_simulator.simulator
+# 9. Endpoints da API REST Flask e controle dinâmico de simulação
+python tests/test_etapa9.py
 ```
 
 ---
 
-## 📁 Estrutura do Repositório
+## Estrutura de Diretórios
 
-```
+```text
 SafeGasMonitor/
-│
-├── api/                           # Camada de Apresentação Web (Flask)
-│   ├── server.py                  # Endpoints REST e servidor web
-│   └── static/                    # Frontend SPA (HTML5, CSS3 moderno, Vanilla JS)
-│       ├── index.html             # Interface gráfica com abas e modais
-│       ├── style.css              # Tema escuro industrial e responsividade
-│       └── app.js                 # Consumo de telemetria e interações
-│
-├── central_command/               # Núcleo da Central de Comando
-│   ├── server.py                  # Cliente MQTT subscriber
-│   ├── pipeline_handler.py        # Orquestrador do fluxo de telemetria
-│   ├── notifier.py                # Disparador de e-mail SMTP e Webhooks
-│   ├── filters/                   # Filtro de Kalman 1D e Média Móvel
-│   ├── lel/                       # Algoritmo de Le Chatelier e Zabetakis
-│   └── alerts/                    # Motor de classificação de risco e limiares
-│
-├── config/                        # Configurações e Contratos
-│   ├── settings.py                # Constantes do sistema, portas e limiares
-│   ├── data_contracts.py          # Dataclasses tipadas (TelemetryPacket, GasReading)
-│   ├── secrets.py.example         # Modelo de configuração de credenciais SMTP
-│   └── secrets.py                 # Credenciais locais (ignorado no Git)
-│
-├── database/                      # Persistência Poliglota
-│   ├── sql/                       # SQLite (schema.sql e repositórios relacionais)
-│   │   ├── schema.sql             # Definição das tabelas e índices relacionais
-│   │   ├── sqlite_repository.py   # Repositórios de dispositivos, usuários e locais
-│   │   └── safegas.db             # Base SQLite pré-populada
-│   └── nosql/                     # MongoDB
-│       └── mongo_repository.py    # Repositório de telemetria e incidentes
-│
-├── epi_simulator/                 # Simulador Físico de Sensores de EPI
-│   ├── simulator.py               # Física estocástica, Ornstein-Uhlenbeck e inércia
-│   └── client.py                  # SimulationManager multi-dispositivo MQTT
-│
-├── reports/                       # Emissão de Laudos Técnicos Periciais
-│   ├── latex/                     # Laudos gerados (.tex e .pdf)
-│   ├── templates/                 # Templates LaTeX com Jinja2
-│   └── report_generator.py        # Compilador de relatórios e gerador de gráficos
-│
-├── ui/                            # Interface Terminal (TUI)
-│   └── tui/                       # Layout em Rich e estado sincronizado
-│       ├── layout.py              # Grid e painéis da interface Rich
-│       └── state.py               # MonitorState thread-safe
-│
-├── tests/                         # Suíte de testes automatizados por etapa
-├── mqtt_broker.py                 # Broker MQTT embutido para execução local
-├── run_central.py                 # Ponto de entrada integrado unificado
-├── start_safegas.bat              # Inicializador portátil com 1 clique (Windows)
-├── requirements.txt               # Dependências do projeto Python
-└── README.md                      # Documentação completa do projeto
+├── api/
+│   ├── server.py                  # Servidor Flask e rotas da API REST
+│   └── static/                    # Interface web (index.html, style.css, app.js)
+├── central_command/
+│   ├── alerts/alert_manager.py    # Classificação de risco e callbacks de alerta
+│   ├── filters/
+│   │   ├── digital_filters.py     # Implementação de MovingAverageFilter e KalmanFilter1D
+│   │   └── pipeline.py            # Gerenciamento de filtros por dispositivo e gás
+│   ├── lel/lel_calculator.py      # Equação de Le Chatelier e correção de Zabetakis
+│   ├── notifier.py                # Envio assíncrono de e-mails SMTP e Webhooks
+│   ├── pipeline_handler.py        # Orquestrador central do fluxo de telemetria
+│   └── server.py                  # Cliente MQTT subscriber da Central
+├── config/
+│   ├── data_contracts.py          # Dataclasses (GasReading, TelemetryPacket, ProcessedReading)
+│   ├── secrets.py.example         # Template de configuração SMTP
+│   └── settings.py                # Constantes físicas, limiares e configurações de rede
+├── database/
+│   ├── nosql/mongo_repository.py  # Repositório MongoDB com suporte a modo degradado
+│   ├── sql/
+│   │   ├── schema.sql             # DDL relacional, views e carga inicial (seed)
+│   │   └── sqlite_repository.py   # CRUD de dispositivos, colaboradores, locais e alocações
+│   └── repositories.py            # Fachada unificada dos repositórios
+├── docs/
+│   └── filter_comparison.png      # Gráfico comparativo de atenuação de ruído (MA vs Kalman)
+├── epi_simulator/
+│   ├── client.py                  # Publicador MQTT e SimulationManager multi-EPI
+│   └── simulator.py               # Simulador físico e estocástico de sensores de gás
+├── reports/
+│   ├── charts/chart_generator.py  # Geração de gráficos temporais com Matplotlib
+│   ├── latex/report_generator.py  # Montagem de templates LaTeX e compilação via pdflatex
+│   └── report_generator.py        # Fachada do módulo de relatórios
+├── tests/                         # Testes unitários e de integração (test_etapa1 a test_etapa9)
+├── tools/
+│   └── compare_filters.py         # Script de benchmark e plotagem dos filtros digitais
+├── ui/
+│   └── tui/
+│       ├── layout.py              # Construção dos painéis de terminal com Rich
+│       └── state.py               # Estado compartilhado thread-safe (MonitorState)
+├── main.py                        # CLI para execução modular (server / client / demo)
+├── mqtt_broker.py                 # Broker MQTT local baseado em amqtt
+├── requirements.txt               # Lista de dependências Python
+├── run_central.py                 # Inicializador integrado de todos os subsistemas
+└── start_safegas.bat              # Script de inicialização rápida para Windows
 ```
 
 ---
 
-## 🔒 Segurança e Resiliência
-
-* **Proteção de Segredos (`.gitignore`)**:
-  * Arquivos como `config/secrets.py`, bancos locais com dados de sessão e artefatos de compilação transitórios estão isolados do controle de versão.
-* **Degradação Graciosa (Graceful Degradation)**:
-  * O sistema não trava se o MongoDB estiver inativo — ele automaticamente registra os alertas e continua operando em modo degradado.
-  * Se o utilitário `pdflatex` não estiver disponível no sistema operacional, o laudo pericial é salvo em formato `.tex` legível e devidamente registrado na base de dados.
-* **Isolamento de Processos**:
-  * O gerenciamento de simulação multi-dispositivo é realizado em threads controladas dentro da mesma aplicação, eliminando o risco de processos zumbis ou vazamento de recursos na máquina do usuário.
-
----
-
-*Projeto acadêmico — Engenharia da Computação / Engenharia de Software — UNIVAP 2026*
+**Instituição:** Universidade do Vale do Paraíba (UNIVAP) — Faculdade de Engenharias, Arquitetura e Urbanismo (FEAU).
