@@ -73,6 +73,25 @@ def get_incidents():
         for i in _monitor_state.incidents
     ])
 
+@app.route("/api/reports/<path:filename>", methods=["GET"])
+def serve_report_file(filename: str):
+    from config.settings import REPORTS_OUTPUT_DIR
+    reports_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", REPORTS_OUTPUT_DIR))
+    safe_name = os.path.basename(filename)
+    target_path = os.path.join(reports_dir, safe_name)
+
+    if safe_name.endswith(".tex"):
+        pdf_candidate = safe_name[:-4] + ".pdf"
+        if os.path.exists(os.path.join(reports_dir, pdf_candidate)):
+            safe_name = pdf_candidate
+            target_path = os.path.join(reports_dir, safe_name)
+
+    if not os.path.exists(target_path):
+        return jsonify({"error": f"Laudo '{safe_name}' não encontrado no servidor."}), 404
+
+    mimetype = "application/pdf" if safe_name.endswith(".pdf") else "text/plain; charset=utf-8"
+    return send_from_directory(reports_dir, safe_name, mimetype=mimetype, as_attachment=False)
+
 # Configurações: E-mail de Notificação de Alerta
 
 @app.route("/api/settings/email", methods=["GET"])

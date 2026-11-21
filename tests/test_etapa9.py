@@ -129,6 +129,28 @@ def test_api_simulator_control():
     print("  [OK] Controle dinâmico do simulador via API (/api/simulator/*)")
 
 
+def test_api_serve_report():
+    from config.settings import REPORTS_OUTPUT_DIR
+    reports_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", REPORTS_OUTPUT_DIR))
+    os.makedirs(reports_dir, exist_ok=True)
+    sample_file = os.path.join(reports_dir, "incident_test_api.tex")
+    with open(sample_file, "w", encoding="utf-8") as f:
+        f.write("\\documentclass{article}\\begin{document}Laudo Teste\\end{document}")
+
+    try:
+        client = app.test_client()
+        res = client.get("/api/reports/incident_test_api.tex")
+        assert res.status_code == 200
+        assert b"Laudo Teste" in res.data
+
+        res_404 = client.get("/api/reports/inexistente_9999.pdf")
+        assert res_404.status_code == 404
+        print("  [OK] GET /api/reports/<filename> serve o laudo corretamente")
+    finally:
+        if os.path.exists(sample_file):
+            os.remove(sample_file)
+
+
 def run_all() -> bool:
     print("\n" + "=" * 60)
     print("  SafeGas Monitor - Testes da API REST (Flask)")
@@ -140,6 +162,7 @@ def run_all() -> bool:
         test_api_history,
         test_api_incidents,
         test_api_simulator_control,
+        test_api_serve_report,
     ]
     passed = 0
     for t in tests:

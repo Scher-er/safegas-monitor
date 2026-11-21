@@ -1,145 +1,180 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafeGas Monitor - Web Dashboard</title>
+    <title>SafeGas Monitor — Console de Supervisão Industrial</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <header class="header">
-        <div class="logo">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            <h1>SafeGas Monitor</h1>
+    <!-- Barra Superior de Comando SCADA -->
+    <div class="topbar">
+        <div class="topbar-brand">
+            <span class="status-led online" title="Broker MQTT Ativo (Porta 1883)"></span>
+            <span class="brand-code">SG-SCADA</span>
+            <span class="brand-divider">/</span>
+            <span class="brand-title">SafeGas Monitor — Supervisão de Atmosferas Explosivas (LEL)</span>
+        </div>
+        <div class="topbar-meta">
+            <span class="meta-item">PROTOCOLO: <strong>MQTT 1883</strong></span>
+            <span class="meta-sep">|</span>
+            <span class="meta-item">FILTRO: <strong>KALMAN 1D</strong></span>
+            <span class="meta-sep">|</span>
+            <span class="meta-item" id="live-clock">--:--:--</span>
+            <button type="button" id="btn-theme-toggle" class="btn-theme" title="Alternar modo de contraste (Claro / Escuro)">
+                Alternar Tema
+            </button>
+        </div>
+    </div>
+
+    <!-- Cabeçalho de Instrumentação e Ações -->
+    <header class="instrument-bar">
+        <div class="kpi-strip">
+            <div class="kpi-box">
+                <span class="kpi-label">TEMPO DE OPERAÇÃO</span>
+                <span class="kpi-value mono" id="val-uptime">00:00:00</span>
+            </div>
+            <div class="kpi-box">
+                <span class="kpi-label">DETECTORES ATIVOS</span>
+                <span class="kpi-value mono" id="val-devices">0</span>
+            </div>
+            <div class="kpi-box">
+                <span class="kpi-label">TAXA DE AMOSTRAGEM</span>
+                <div class="kpi-unit-row">
+                    <span class="kpi-value mono" id="val-pps">0.0</span>
+                    <span class="kpi-unit">pct/s</span>
+                </div>
+            </div>
+            <div class="kpi-box kpi-critical">
+                <span class="kpi-label">LAUDOS CRÍTICOS</span>
+                <span class="kpi-value mono" id="val-incidents">0</span>
+            </div>
         </div>
 
-        <div class="header-actions">
-            <!-- Botão Configurar E-mail -->
-            <button id="btn-email-modal" class="btn btn-outline" title="Clique para alterar o e-mail que recebe os laudos">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                <span class="btn-text">E-mail:</span>
-                <strong id="header-dest-email">Carregando...</strong>
+        <div class="control-actions">
+            <button id="btn-email-modal" class="btn btn-outline" title="Configurar destinatário dos laudos periciais em PDF">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <span class="btn-label">Destinatário SMTP:</span>
+                <strong id="header-dest-email" class="mono">Carregando...</strong>
             </button>
 
-            <!-- Botão Cadastrar Novo Equipamento -->
             <button id="btn-register-modal" class="btn btn-primary">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                <span>+ Novo Equipamento</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span>Cadastrar Equipamento</span>
             </button>
-        </div>
-
-        <div class="stats-container">
-            <div class="stat-badge">
-                <span class="stat-label">Uptime</span>
-                <span class="stat-value" id="val-uptime">00:00:00</span>
-            </div>
-            <div class="stat-badge">
-                <span class="stat-label">EPIs Ativos</span>
-                <span class="stat-value" id="val-devices">0</span>
-            </div>
-            <div class="stat-badge">
-                <span class="stat-label">Pct/s</span>
-                <span class="stat-value" id="val-pps">0.0</span>
-            </div>
-            <div class="stat-badge danger">
-                <span class="stat-label">Laudos Gerados</span>
-                <span class="stat-value" id="val-incidents">0</span>
-            </div>
         </div>
     </header>
 
-    <main class="dashboard">
-        <!-- Devices Section -->
-        <section class="panel devices-panel">
-            <div class="panel-header-tabs">
-                <h2>EPIs & Sensores</h2>
-                <div class="tab-group">
-                    <button class="tab-btn active" id="tab-live-btn">📡 Em Monitoramento</button>
-                    <button class="tab-btn" id="tab-registry-btn">📋 Cadastrados no SQLite</button>
+    <!-- Área Principal de Supervisão -->
+    <main class="workspace">
+        <!-- Coluna Esquerda: Telemetria de Campo e Banco Relacional -->
+        <section class="module module-primary">
+            <div class="module-header">
+                <div class="module-title-block">
+                    <span class="module-tag">MÓDULO 01</span>
+                    <h2>Unidades de Detecção Portáteis (EPIs)</h2>
+                </div>
+                <div class="segmented-control">
+                    <button class="seg-btn active" id="tab-live-btn">Telemetria em Tempo Real</button>
+                    <button class="seg-btn" id="tab-registry-btn">Inventário Relacional (SQLite)</button>
                 </div>
             </div>
 
-            <!-- Tabela 1: Leituras em tempo real -->
-            <div class="table-responsive" id="container-live-devices">
+            <!-- Visão 1: Telemetria em Tempo Real -->
+            <div class="table-viewport" id="container-live-devices">
                 <table id="devices-table">
                     <thead>
                         <tr>
-                            <th>Última Leitura</th>
-                            <th>ID EPI</th>
-                            <th>Funcionário</th>
-                            <th>Risco R (%)</th>
-                            <th>Nível de Alerta</th>
-                            <th>T (°C)</th>
-                            <th>Pacotes</th>
+                            <th>Timestamp</th>
+                            <th>Código EPI</th>
+                            <th>Colaborador / Local</th>
+                            <th>Índice de Risco (% LEL)</th>
+                            <th class="text-center">Classificação</th>
+                            <th class="text-right">Temp. (°C)</th>
+                            <th class="text-right">Amostras</th>
                         </tr>
                     </thead>
                     <tbody id="devices-body">
-                        <tr><td colspan="7" class="text-center text-muted">Aguardando dados...</td></tr>
+                        <tr><td colspan="7" class="empty-row">Aguardando recepção de pacotes MQTT...</td></tr>
                     </tbody>
                 </table>
             </div>
 
-            <!-- Tabela 2: Equipamentos cadastrados no banco relacional -->
-            <div class="table-responsive hidden" id="container-registry-devices">
+            <!-- Visão 2: Inventário SQLite -->
+            <div class="table-viewport hidden" id="container-registry-devices">
                 <table id="registry-table">
                     <thead>
                         <tr>
-                            <th>ID EPI</th>
-                            <th>Modelo / Fabricante</th>
+                            <th>Código EPI</th>
+                            <th>Especificação Técnica</th>
                             <th>Nº de Série</th>
                             <th>Status</th>
-                            <th>Calibração</th>
-                            <th>Funcionário</th>
-                            <th>Local Atribuído</th>
-                            <th>Ação</th>
+                            <th>Validade Calibração</th>
+                            <th>Colaborador Alocado</th>
+                            <th>Setor / Área</th>
+                            <th class="text-center">Transmissão</th>
                         </tr>
                     </thead>
                     <tbody id="registry-body">
-                        <tr><td colspan="8" class="text-center text-muted">Carregando cadastros...</td></tr>
+                        <tr><td colspan="8" class="empty-row">Consultando base SQLite...</td></tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <!-- Right Column (History & Incidents) -->
-        <div class="right-column">
-            <section class="panel history-panel">
-                <h2>Histórico de Eventos Recentes</h2>
-                <div class="table-responsive">
+        <!-- Coluna Direita: Eventos e Laudos Periciais -->
+        <div class="side-modules">
+            <!-- Módulo 02: Log de Eventos -->
+            <section class="module module-warning">
+                <div class="module-header">
+                    <div class="module-title-block">
+                        <span class="module-tag">MÓDULO 02</span>
+                        <h2>Registro de Anomalias e Limiares (R &ge; 10% LEL)</h2>
+                    </div>
+                </div>
+                <div class="table-viewport">
                     <table id="history-table">
                         <thead>
                             <tr>
-                                <th>Hora</th>
+                                <th>Horário</th>
                                 <th>EPI</th>
-                                <th>Evento</th>
-                                <th>Risco</th>
-                                <th>Gases</th>
+                                <th class="text-center">Severidade</th>
+                                <th class="text-right">Risco LEL</th>
+                                <th>Composição Filtrada</th>
                             </tr>
                         </thead>
                         <tbody id="history-body">
-                            <tr><td colspan="5" class="text-center text-muted">Nenhum evento detectado</td></tr>
+                            <tr><td colspan="5" class="empty-row">Nenhuma anomalia registrada no turno atual.</td></tr>
                         </tbody>
                     </table>
                 </div>
             </section>
 
-            <section class="panel incidents-panel">
-                <h2>Incidentes Críticos Registrados</h2>
-                <div class="table-responsive">
+            <!-- Módulo 03: Incidentes Críticos e Laudos -->
+            <section class="module module-critical">
+                <div class="module-header">
+                    <div class="module-title-block">
+                        <span class="module-tag">MÓDULO 03</span>
+                        <h2>Ocorrências Críticas e Laudos Técnicos Emitidos</h2>
+                    </div>
+                    <span class="module-hint">Clique no documento para abrir o laudo</span>
+                </div>
+                <div class="table-viewport">
                     <table id="incidents-table">
                         <thead>
                             <tr>
-                                <th>Hora</th>
-                                <th>Incidente ID</th>
+                                <th>Horário</th>
+                                <th>Protocolo</th>
                                 <th>EPI</th>
-                                <th>Pico de Risco</th>
-                                <th>Laudo Gerado</th>
+                                <th class="text-right">Pico LEL</th>
+                                <th>Laudo Gerado (PDF / LaTeX)</th>
                             </tr>
                         </thead>
                         <tbody id="incidents-body">
-                            <tr><td colspan="5" class="text-center text-muted">Nenhum incidente crítico</td></tr>
+                            <tr><td colspan="5" class="empty-row">Nenhum incidente crítico registrado.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -147,125 +182,129 @@
         </div>
     </main>
 
-    <!-- Modal: Cadastrar Novo Equipamento -->
-    <div id="modal-register" class="modal-overlay hidden">
-        <div class="modal-card">
-            <div class="modal-header">
-                <div class="modal-title-group">
-                    <h3>Cadastrar Novo Equipamento (EPI)</h3>
-                    <p>Registro institucional do detector na base SQLite e atribuição a colaborador.</p>
+    <!-- Modal: Cadastro de Equipamento -->
+    <div id="modal-register" class="modal-backdrop hidden">
+        <div class="modal-window">
+            <div class="modal-top">
+                <div>
+                    <span class="module-tag">CADASTRO INSTITUCIONAL</span>
+                    <h3>Registrar Novo Detector Multigás (EPI)</h3>
                 </div>
-                <button class="modal-close" id="btn-close-register">&times;</button>
+                <button class="modal-close-btn" id="btn-close-register" aria-label="Fechar">&times;</button>
             </div>
-            <form id="form-register-device" class="modal-body">
+            <form id="form-register-device" class="modal-content">
                 <div class="form-grid">
-                    <div class="form-group">
-                        <label for="reg-device-id">ID do Dispositivo (EPI) <span class="required">*</span></label>
+                    <div class="field">
+                        <label for="reg-device-id">Código Identificador <span class="req">*</span></label>
                         <input type="text" id="reg-device-id" name="device_id" placeholder="Ex: EPI-004" required>
                     </div>
-                    <div class="form-group">
-                        <label for="reg-model">Modelo do Detector <span class="required">*</span></label>
+                    <div class="field">
+                        <label for="reg-model">Modelo do Instrumento <span class="req">*</span></label>
                         <input type="text" id="reg-model" name="model" placeholder="Ex: SafeGas Mk.II Multi-Gás" required>
                     </div>
-                    <div class="form-group">
+                    <div class="field">
                         <label for="reg-manufacturer">Fabricante</label>
-                        <input type="text" id="reg-manufacturer" name="manufacturer" value="SafeGas Lab" placeholder="Ex: SafeGas Lab">
+                        <input type="text" id="reg-manufacturer" name="manufacturer" value="SafeGas Lab">
                     </div>
-                    <div class="form-group">
+                    <div class="field">
                         <label for="reg-serial-number">Número de Série</label>
                         <input type="text" id="reg-serial-number" name="serial_number" placeholder="Ex: SG-2026-004">
                     </div>
-                    <div class="form-group">
+                    <div class="field">
                         <label for="reg-calibration-date">Data de Calibração</label>
                         <input type="date" id="reg-calibration-date" name="calibration_date">
                     </div>
-                    <div class="form-group">
-                        <label for="reg-next-calibration">Próxima Calibração</label>
+                    <div class="field">
+                        <label for="reg-next-calibration">Vencimento da Calibração</label>
                         <input type="date" id="reg-next-calibration" name="next_calibration">
                     </div>
-                    <div class="form-group">
-                        <label for="reg-status">Status Operacional</label>
+                    <div class="field">
+                        <label for="reg-status">Condição Operacional</label>
                         <select id="reg-status" name="status">
-                            <option value="ACTIVE" selected>Ativo (ACTIVE)</option>
-                            <option value="MAINTENANCE">Manutenção (MAINTENANCE)</option>
-                            <option value="RETIRED">Aposentado (RETIRED)</option>
+                            <option value="ACTIVE" selected>Ativo em Operação (ACTIVE)</option>
+                            <option value="MAINTENANCE">Em Manutenção (MAINTENANCE)</option>
+                            <option value="RETIRED">Inativo / Baixado (RETIRED)</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="reg-gas-targets">Gases Monitorados</label>
+                    <div class="field">
+                        <label for="reg-gas-targets">Matriz de Sensores</label>
                         <input type="text" id="reg-gas-targets" name="gas_targets" value="CH4,CO,H2S,C3H8,C4H10">
                     </div>
-                    <div class="form-group">
-                        <label for="reg-worker-id">Atribuir a Funcionário</label>
+                    <div class="field">
+                        <label for="reg-worker-id">Colaborador Responsável</label>
                         <select id="reg-worker-id" name="worker_id">
-                            <option value="">-- Selecione o Funcionário (Opcional) --</option>
+                            <option value="">-- Não alocado (Em estoque) --</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="reg-location-id">Local de Risco / Operação</label>
+                    <div class="field">
+                        <label for="reg-location-id">Setor / Área de Risco</label>
                         <select id="reg-location-id" name="location_id">
-                            <option value="">-- Selecione o Local (Opcional) --</option>
+                            <option value="">-- Não definido --</option>
                         </select>
                     </div>
-                    <div class="form-group full-width">
-                        <label for="reg-notes">Observações Técnicas</label>
-                        <textarea id="reg-notes" name="notes" rows="2" placeholder="Notas sobre lote, calibração ou restrições de uso..."></textarea>
+                    <div class="field field-full">
+                        <label for="reg-notes">Observações de Engenharia</label>
+                        <textarea id="reg-notes" name="notes" rows="2" placeholder="Certificado de calibração, lote de sensores ou restrições de área..."></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" id="btn-cancel-register">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" id="btn-submit-register">Salvar Equipamento</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-register">Confirmar Registro</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal: Configurar E-mail de Alerta -->
-    <div id="modal-email" class="modal-overlay hidden">
-        <div class="modal-card modal-card-sm">
-            <div class="modal-header">
-                <div class="modal-title-group">
-                    <h3>E-mail de Notificação de Alerta</h3>
-                    <p>Defina o destinatário que receberá os laudos em PDF compilados em incidentes críticos.</p>
+    <!-- Modal: Configurar E-mail SMTP -->
+    <div id="modal-email" class="modal-backdrop hidden">
+        <div class="modal-window modal-sm">
+            <div class="modal-top">
+                <div>
+                    <span class="module-tag">PARÂMETROS DE EMERGÊNCIA</span>
+                    <h3>Destinatário de Laudos Críticos (SMTP)</h3>
                 </div>
-                <button class="modal-close" id="btn-close-email">&times;</button>
+                <button class="modal-close-btn" id="btn-close-email" aria-label="Fechar">&times;</button>
             </div>
-            <form id="form-email-settings" class="modal-body">
-                <div class="form-group">
-                    <label for="input-email-dest">Endereço de E-mail <span class="required">*</span></label>
-                    <input type="email" id="input-email-dest" name="dest_email" placeholder="exemplo@gmail.com" required>
-                    <small class="form-help">Ao atingir nível CRITICAL (R &ge; 50%), o sistema enviará o laudo técnico por este e-mail.</small>
+            <form id="form-email-settings" class="modal-content">
+                <div class="field">
+                    <label for="input-email-dest">E-mail da Supervisão / Brigada <span class="req">*</span></label>
+                    <input type="email" id="input-email-dest" name="dest_email" placeholder="seguranca@empresa.com.br" required>
+                    <small class="field-hint">Quando qualquer EPI atingir nível CRITICAL (R &ge; 50% do LEL), o laudo técnico compilado em PDF será encaminhado automaticamente para este endereço.</small>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" id="btn-cancel-email">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" id="btn-submit-email">Salvar Alterações</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-email">Atualizar Destinatário</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal: Confirmação de Início de Operação do EPI -->
-    <div id="modal-confirm-start" class="modal-overlay hidden">
-        <div class="modal-card modal-card-sm text-center">
-            <div class="confirm-icon-badge">
-                <span class="confirm-icon">🚀</span>
+    <!-- Modal: Confirmação Pós-Cadastro para Início de Telemetria -->
+    <div id="modal-confirm-start" class="modal-backdrop hidden">
+        <div class="modal-window modal-sm">
+            <div class="modal-top">
+                <div>
+                    <span class="module-tag">ACIONAMENTO DE TELEMETRIA</span>
+                    <h3 id="confirm-start-title">Equipamento Registrado</h3>
+                </div>
             </div>
-            <h3 id="confirm-start-title" style="margin-bottom: 8px;">Equipamento Cadastrado!</h3>
-            <p id="confirm-start-msg" class="text-muted" style="font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
-                Deseja adicionar o equipamento à tela principal e <strong>iniciar o funcionamento e simulação de dados em tempo real</strong> agora?
-            </p>
-            <div class="confirm-actions" style="display: flex; gap: 12px; justify-content: center;">
-                <button type="button" class="btn btn-secondary" id="btn-confirm-no" style="flex: 1;">
-                    Não, apenas cadastrar
-                </button>
-                <button type="button" class="btn btn-primary" id="btn-confirm-yes" style="flex: 1.2;">
-                    Sim, Iniciar Funcionamento
-                </button>
+            <div class="modal-content">
+                <p id="confirm-start-msg" class="confirm-text">
+                    Deseja incluir este equipamento no painel principal e iniciar a transmissão de dados via MQTT agora?
+                </p>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="btn-confirm-no">
+                        Não, apenas registrar
+                    </button>
+                    <button type="button" class="btn btn-primary" id="btn-confirm-yes">
+                        Sim, Iniciar Funcionamento
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Toast Notification -->
+    <!-- Notificação Flutuante -->
     <div id="toast" class="toast hidden"></div>
 
     <script src="app.js"></script>
