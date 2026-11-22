@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Repositório MongoDB
-================================================
+SafeGas Monitor - Repositório MongoDB
 Persistência NoSQL para logs de telemetria de alta frequência.
 
 Usa pymongo. Se o MongoDB não estiver disponível (servidor desligado
@@ -39,7 +38,7 @@ from config.data_contracts import ProcessedReading, IncidentRecord, GasReading
 
 log = logging.getLogger(__name__)
 
-# Tentativa de importar pymongo — falha silenciosa se não instalado
+# Tentativa de importar pymongo - falha silenciosa se não instalado
 try:
     import pymongo
     from pymongo import MongoClient, ASCENDING, DESCENDING
@@ -154,18 +153,17 @@ class MongoTelemetryRepository:
                 "MongoDB indisponível (%s). Operações de telemetria desativadas.", e
             )
 
-    # ------------------------------------------------------------------
     def _ensure_indexes(self) -> None:
         """Cria índices necessários se ainda não existirem."""
-        # telemetry: índice composto para queries por EPI + tempo
+        # Indice composto por dispositivo e horario
         self._telemetry.create_index(
             [("device_id", ASCENDING), ("timestamp", DESCENDING)],
             name="idx_device_timestamp",
         )
-        # telemetry: índice de alert_level para queries de incidentes
+        # Indice por nivel de alerta
         self._telemetry.create_index("alert_level", name="idx_alert_level")
 
-        # telemetry: TTL index (se configurado)
+        # Indice de expiracao automatica (TTL)
         if _TELEMETRY_TTL_SECONDS is not None:
             self._telemetry.create_index(
                 "_created_at",
@@ -173,16 +171,14 @@ class MongoTelemetryRepository:
                 name="idx_ttl",
             )
 
-        # incidents: índice composto
+        # Indice composto para consultas de incidentes
         self._incidents.create_index(
             [("device_id", ASCENDING), ("triggered_at", DESCENDING)],
             name="idx_incident_device_time",
         )
         log.debug("Índices MongoDB verificados/criados.")
 
-    # ------------------------------------------------------------------
     # Telemetria
-    # ------------------------------------------------------------------
 
     def insert_reading(self, processed: ProcessedReading) -> Optional[str]:
         """
@@ -326,9 +322,7 @@ class MongoTelemetryRepository:
             log.error("Erro na agregação por nível: %s", e)
             return {}
 
-    # ------------------------------------------------------------------
     # Incidentes
-    # ------------------------------------------------------------------
 
     def insert_incident(self, incident: IncidentRecord) -> Optional[str]:
         """
@@ -387,7 +381,6 @@ class MongoTelemetryRepository:
             log.error("Erro ao resolver incidente: %s", e)
             return False
 
-    # ------------------------------------------------------------------
     @property
     def is_available(self) -> bool:
         """True se a conexão com MongoDB está ativa."""

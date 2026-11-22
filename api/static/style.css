@@ -1,4 +1,4 @@
-/* SafeGas Monitor — Industrial SCADA Supervision Console */
+/* SafeGas Monitor - Estilos do Painel Web */
 
 :root,
 html[data-theme="light"] {
@@ -13,7 +13,7 @@ html[data-theme="light"] {
     --text-secondary: #475569;
     --text-muted: #64748b;
 
-    /* Industrial Palette (Petrol Teal, Safety Amber, Signal Crimson) */
+    /* Paleta de cores de status e destaque */
     --accent-primary: #0f766e;
     --accent-primary-hover: #115e59;
     --accent-primary-soft: rgba(15, 118, 110, 0.1);
@@ -96,7 +96,7 @@ body {
     font-family: 'IBM Plex Mono', monospace;
 }
 
-/* Barra Superior de Comando SCADA */
+/* Barra superior */
 .topbar {
     background-color: var(--bg-topbar);
     color: var(--text-topbar);
@@ -487,7 +487,7 @@ tbody tr:hover {
 .text-right { text-align: right; }
 .text-muted { color: var(--text-muted); }
 
-/* Medidor de Risco Horizontal (Gauge Bar) */
+/* Barra horizontal de nivel de risco */
 .risk-cell {
     display: flex;
     align-items: center;
@@ -753,7 +753,7 @@ tbody tr:hover {
     border-top: 1px solid var(--border-subtle);
 }
 
-/* Toast Notification */
+/* Mensagem de aviso flutuante */
 .toast {
     position: fixed;
     bottom: 20px;

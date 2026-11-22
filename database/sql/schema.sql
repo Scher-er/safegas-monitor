@@ -1,17 +1,8 @@
--- SafeGas Monitor — Esquema SQLite
--- ===========================================
--- Banco relacional para cadastros institucionais:
---   dispositivos EPI, funcionários e locais de risco.
---
+-- SafeGas Monitor - Esquema do Banco SQLite
+-- Banco relacional para cadastros de dispositivos EPI, funcionarios e locais de risco.
 -- Executar com: sqlite3 safegas.db < schema.sql
--- Ou via Python: connection.executescript(open("schema.sql").read())
---
--- Referências normativas:
---   ABNT NBR 14022 — EPI para gás
---   ABNT NBR 17505 — Armazenamento de inflamáveis
--- ============================================================
 
-PRAGMA journal_mode = WAL;        -- Write-Ahead Logging para maior performance
+PRAGMA journal_mode = WAL;        -- Modo WAL para leitura e escrita simultaneas
 PRAGMA foreign_keys = ON;         -- Integridade referencial habilitada
 
 -- Dispositivos EPI
@@ -19,9 +10,9 @@ CREATE TABLE IF NOT EXISTS devices (
     device_id          TEXT PRIMARY KEY,           -- ex: "EPI-001"
     model              TEXT NOT NULL,              -- modelo do sensor
     manufacturer       TEXT,                       -- fabricante
-    serial_number      TEXT UNIQUE,                -- número de série
-    calibration_date   TEXT NOT NULL,              -- ISO 8601 date (YYYY-MM-DD)
-    next_calibration   TEXT NOT NULL,              -- próxima calibração (ISO 8601)
+    serial_number      TEXT UNIQUE,                -- numero de serie
+    calibration_date   TEXT NOT NULL,              -- data de calibracao (AAAA-MM-DD)
+    next_calibration   TEXT NOT NULL,              -- proxima calibracao (AAAA-MM-DD)
     status             TEXT NOT NULL DEFAULT 'ACTIVE'
                         CHECK (status IN ('ACTIVE','MAINTENANCE','RETIRED')),
     gas_targets        TEXT NOT NULL DEFAULT 'CH4,CO,H2S',  -- gases monitorados (CSV)
@@ -57,7 +48,7 @@ CREATE TABLE IF NOT EXISTS locations (
     notes              TEXT
 );
 
--- Atribuições EPI ↔ Funcionário
+-- Atribuicoes entre EPI, Funcionario e Local
 CREATE TABLE IF NOT EXISTS assignments (
     assignment_id      INTEGER PRIMARY KEY AUTOINCREMENT,
     device_id          TEXT NOT NULL REFERENCES devices(device_id) ON DELETE CASCADE,
@@ -113,7 +104,7 @@ SELECT
 FROM devices
 WHERE status = 'ACTIVE';
 
--- Dados de seed (desenvolvimento)
+-- Dados iniciais para execucao local
 INSERT OR IGNORE INTO devices (device_id, model, manufacturer, serial_number,
     calibration_date, next_calibration, status, gas_targets) VALUES
     ('EPI-001', 'SafeGas Mk.I (Simulado)', 'SafeGas Lab', 'SG-SIM-001',

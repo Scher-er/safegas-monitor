@@ -19,11 +19,11 @@ from central_command.pipeline_handler import PipelineHandler
 from ui.tui.state import MonitorState
 from ui.tui.layout import TuiBuilder
 
-# Import Flask app
+# Importa a aplicacao Flask
 from api.server import app as flask_app, init_api
 
 def run_flask_app():
-    # Usando Werkzeug Server embutido para ambiente de dev local. Desativar debug log
+    # Desativa os logs padrao de requisicao HTTP do Werkzeug no terminal
     import logging
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
@@ -32,8 +32,8 @@ def run_flask_app():
 def main():
     print("Iniciando SafeGas Monitor - Central de Comando (MQTT + Flask)...")
     
-    # 1. Iniciar Broker MQTT no background sem poluir o terminal
-    print("Iniciando Broker MQTT Local em background...")
+    # 1. Inicia o broker MQTT local em segundo plano
+    print("Iniciando Broker MQTT local em segundo plano...")
     broker_proc = subprocess.Popen(
         [sys.executable, "mqtt_broker.py"],
         stdout=subprocess.DEVNULL,
@@ -41,7 +41,7 @@ def main():
     )
     time.sleep(2) # Aguarda o broker subir
     
-    # 2. Iniciar SimulationManager (multi-EPI) com os dispositivos ativos do SQLite
+    # 2. Inicia o gerenciador de simulacao com os EPIs ativos cadastrados no SQLite
     print("Iniciando Simulador Multi-EPI (SimulationManager)...")
     from epi_simulator.client import SimulationManager
     sim_manager = SimulationManager(host="127.0.0.1", port=1883)
@@ -64,7 +64,7 @@ def main():
         on_packet=handler,
     )
     
-    # Start MQTT Subscriber
+    # Inicia o assinante MQTT da Central
     server.start()
     
     # Inicia a API Web (Flask) integrada ao SimulationManager

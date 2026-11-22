@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Testes da Etapa 4 (Filtros Digitais)
-=======================================================
+SafeGas Monitor - Testes da Etapa 4 (Filtros Digitais)
 Testa:
   1. MovingAverageFilter: cálculo, aquecimento, soma O(1), reset
   2. KalmanFilter1D: convergência, ganho, reset, limites de parâmetros
@@ -24,7 +23,7 @@ import uuid
 from datetime import datetime, timezone
 
 
-# Helpers
+# Funcoes auxiliares
 
 def make_packet(device_id="EPI-T", readings_data: dict = None) -> TelemetryPacket:
     """Cria um TelemetryPacket de teste com leituras configuráveis."""
@@ -316,7 +315,7 @@ def test_pipeline_state_per_device():
     for _ in range(5):
         pipe.process(make_packet("EPI-B", {"CH4": 0.1}))
 
-    # As estimativas devem ser diferentes — estado independente
+    # As estimativas devem ser diferentes - estado independente
     result_a = pipe.process(make_packet("EPI-A", {"CH4": 2.0}))
     result_b = pipe.process(make_packet("EPI-B", {"CH4": 0.1}))
 
@@ -401,11 +400,11 @@ def test_pipeline_with_real_simulator():
     )
 
 
-# Runner
+# Execucao dos testes
 
 def run_all():
     print("\n" + "=" * 62)
-    print("  SafeGas Monitor — Testes da Etapa 4 (Filtros Digitais)")
+    print("  SafeGas Monitor - Testes da Etapa 4 (Filtros Digitais)")
     print("=" * 62)
 
     groups = [

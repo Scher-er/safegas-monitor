@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Repositório SQLite
-===============================================
+SafeGas Monitor - Repositório SQLite
 Persistência relacional para cadastros institucionais.
 Usa o módulo sqlite3 da biblioteca padrão do Python — sem dependências extras.
 
@@ -101,7 +100,6 @@ class SQLiteRepository:
         self._conn: Optional[sqlite3.Connection] = None
         self._connect(apply_schema)
 
-    # ------------------------------------------------------------------
     def _connect(self, apply_schema: bool) -> None:
         self._conn = sqlite3.connect(
             self._db_path,

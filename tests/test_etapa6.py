@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Testes da Etapa 6 (Persistência Híbrida)
-===========================================================
+SafeGas Monitor - Testes da Etapa 6 (Persistência Híbrida)
 Testa:
   1. SQLite — DeviceRepository:     CRUD, validação, atualização de status
   2. SQLite — WorkerRepository:     CRUD, ativação/desativação
@@ -35,7 +34,7 @@ from database.nosql.mongo_repository import MongoTelemetryRepository
 from central_command.pipeline_handler import PipelineHandler
 
 
-# Helpers SQLite
+# Funcoes auxiliares do SQLite
 
 # Schema sem dados de seed (apenas DDL) para testes isolados
 _SCHEMA_DDL_ONLY = """
@@ -348,14 +347,14 @@ def test_location_register_and_get():
 def test_location_list_by_risk():
     """list_by_risk deve filtrar corretamente."""
     repo = _location_repo()
-    # HIGH
+    # Risco alto
     repo.register(_sample_location("01"))
-    # MEDIUM
+    # Risco medio
     repo.register(LocationRecord(
         location_id="LOC-M01", name="Local Médio", area="Zona A",
         risk_level="MEDIUM",
     ))
-    # EXTREME
+    # Risco extremo
     repo.register(LocationRecord(
         location_id="LOC-E01", name="Local Extremo", area="Zona B",
         risk_level="EXTREME",
@@ -452,7 +451,7 @@ def test_mongo_graceful_degradation():
     )
     assert not repo.is_available
 
-    # Todas as operações devem ser no-op
+    # Em modo offline as operacoes nao devem gerar erro
     assert repo.insert_reading(_sample_processed()) is None
     assert repo.get_recent_by_device("EPI-X") == []
     assert repo.get_critical_events() == []
@@ -542,11 +541,11 @@ def test_pipeline_handler_without_mongo():
     print(f"  [OK] PipelineHandler sem MongoDB: level={result.alert_level}, mongo=False")
 
 
-# Runner
+# Execucao dos testes
 
 def run_all():
     print("\n" + "=" * 65)
-    print("  SafeGas Monitor — Testes da Etapa 6 (Persistência Híbrida)")
+    print("  SafeGas Monitor - Testes da Etapa 6 (Persistência Híbrida)")
     print("=" * 65)
 
     groups = [

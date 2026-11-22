@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Testes da Etapa 8 (Interface TUI)
-===================================================
+SafeGas Monitor - Testes da Etapa 8 (Interface TUI)
 Testa a lógica de gerenciamento de estado (MonitorState) e a construção
 de layouts do Rich (TuiBuilder), garantindo a robustez do monitor.
 """
@@ -56,7 +55,7 @@ def test_monitor_state_update_device():
     assert devices[0].device_id == "EPI-A"
     assert devices[0].packets_received == 1
 
-    # Atualiza mesmo device
+    # Atualiza o mesmo dispositivo
     reading2 = _make_reading("EPI-A", "ATTENTION", 15.0)
     state.update_from_reading(reading2, _make_lel_result(15.0))
     
@@ -118,7 +117,7 @@ def test_tui_builder_renders_without_error():
 
 def run_all():
     print("\n" + "=" * 65)
-    print("  SafeGas Monitor — Testes da Etapa 8 (TUI)")
+    print("  SafeGas Monitor - Testes da Etapa 8 (TUI)")
     print("=" * 65)
 
     tests = [

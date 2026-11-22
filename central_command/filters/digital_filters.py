@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Filtros Digitais
-=============================================
+SafeGas Monitor - Filtros Digitais
 Implementa dois filtros para suavização do sinal bruto dos sensores:
 
   1. MovingAverageFilter  — Média Móvel Simples (SMA)
@@ -66,7 +65,6 @@ class MovingAverageFilter:
         self._sum = 0.0     # soma acumulada para cálculo eficiente O(1)
         log.debug("MovingAverageFilter criado: N=%d", window_size)
 
-    # ------------------------------------------------------------------
     def update(self, value: float) -> float:
         """
         Insere nova amostra e retorna a média filtrada.
@@ -86,7 +84,6 @@ class MovingAverageFilter:
 
         return self._sum / len(self._buffer)
 
-    # ------------------------------------------------------------------
     def reset(self, initial_value: Optional[float] = None) -> None:
         """
         Limpa o estado do filtro.
@@ -100,7 +97,6 @@ class MovingAverageFilter:
             for _ in range(self.window_size):
                 self.update(initial_value)
 
-    # ------------------------------------------------------------------
     @property
     def is_warmed_up(self) -> bool:
         """True quando o buffer está cheio (período de aquecimento encerrado)."""
@@ -177,7 +173,6 @@ class KalmanFilter1D:
             process_variance, measurement_variance, initial_estimate,
         )
 
-    # ------------------------------------------------------------------
     def update(self, measurement: float) -> float:
         """
         Processa uma nova medição e retorna o estado estimado.
@@ -221,7 +216,6 @@ class KalmanFilter1D:
         )
         return self._x
 
-    # ------------------------------------------------------------------
     def reset(self, initial_estimate: float = 0.0,
               initial_error_covariance: float = 1.0) -> None:
         """Reinicia o filtro para o estado inicial."""
@@ -230,7 +224,6 @@ class KalmanFilter1D:
         self._initialized = False
         self._sample_count = 0
 
-    # ------------------------------------------------------------------
     @property
     def current_estimate(self) -> float:
         """Estimativa atual do estado x̂_{k|k}."""

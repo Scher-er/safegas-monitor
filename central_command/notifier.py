@@ -39,7 +39,7 @@ class EmergencyNotifier:
             self.smtp_user = None
             self.smtp_pass = None
         
-        # Rate limiting: device_id -> timestamp ultimo alerta
+        # Controle de intervalo minimo entre alertas por dispositivo
         self._last_alert_time: Dict[str, float] = {}
 
     def notify_critical_incident(self, device_id: str, worker_id: str, location: str, risk_ratio: float, details: str, attachment_path: Optional[str] = None):
@@ -68,11 +68,11 @@ class EmergencyNotifier:
             f"Inicie protocolo de evacuacao imediatamente."
         )
         
-        # Dispara SMTP em background
+        # Envia e-mail em thread separada
         t_smtp = threading.Thread(target=self._send_email, args=(subject, body, attachment_path), daemon=True)
         t_smtp.start()
         
-        # Dispara Webhook em background
+        # Envia notificacao webhook em thread separada
         if self.webhook_url:
             payload = {
                 "alert_level": "CRITICAL",

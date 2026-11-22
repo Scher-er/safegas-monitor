@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Estado Thread-Safe do Monitor
-=========================================================
+SafeGas Monitor - Estado Thread-Safe do Monitor
 Centraliza o estado compartilhado entre o pipeline (threads do servidor)
 e a interface TUI (thread de renderização). Todas as operações são
 protegidas por Lock para evitar race conditions.
@@ -95,7 +94,7 @@ class MonitorState:
     def __init__(self):
         self._lock = threading.Lock()
 
-        # Dispositivos conectados: device_id → DeviceStatus
+        # Dispositivos conectados: device_id -> DeviceStatus
         self._devices: dict[str, DeviceStatus] = {}
 
         # Histórico de alertas (todos os níveis)

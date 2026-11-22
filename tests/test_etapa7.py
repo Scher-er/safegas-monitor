@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Testes da Etapa 7 (Geração de Laudos LaTeX)
-=============================================================
+SafeGas Monitor - Testes da Etapa 7 (Geração de Laudos LaTeX)
 Testa:
   1. _latex_escape: caracteres especiais corretamente escapados
   2. IncidentChartGenerator: PNG gerado com histórico real
@@ -30,7 +29,7 @@ from reports.latex.report_generator import (
 )
 
 
-# Helpers
+# Funcoes auxiliares
 
 def _make_processed(
     device_id="EPI-TEX",
@@ -347,7 +346,7 @@ def test_report_chart_embedded_in_tex():
         )
         processed = _make_processed()
         lel = _make_lel_result(processed)
-        # Histórico suficiente para gerar chart
+        # Historico suficiente para gerar o grafico
         history = _make_history(20)
         incident = gen.generate(processed, lel, history)
 
@@ -391,7 +390,7 @@ def test_pipeline_generates_report_on_critical():
             compile_pdf=False,
         )
 
-        # Alimenta amostras crescentes até CRITICAL (CH4=2.5% → R=50%)
+        # Alimenta amostras crescentes até CRITICAL (CH4=2.5% -> R=50%)
         for _ in range(20):
             pkt = TelemetryPacket(
                 packet_id=str(uuid.uuid4()),
@@ -416,7 +415,7 @@ def test_pipeline_generates_report_on_critical():
             f"incidentes={handler.stats['incidents_generated']}"
         )
 
-        # Restaura settings
+        # Restaura configuracoes
         stt.REPORTS_OUTPUT_DIR = original_reports
         stt.CHARTS_OUTPUT_DIR  = original_charts
     finally:
@@ -436,7 +435,7 @@ def test_pipeline_report_generator_exception_does_not_crash():
             raise RuntimeError("Falha simulada no gerador de laudos!")
     handler._report_generator = BrokenGenerator()
 
-    # Deve processar normalmente — _generate_report captura a exceção
+    # Deve processar normalmente - _generate_report captura a exceção
     pkt = TelemetryPacket(
         packet_id=str(uuid.uuid4()),
         timestamp=datetime.now(timezone.utc).isoformat(),
@@ -446,7 +445,7 @@ def test_pipeline_report_generator_exception_does_not_crash():
         temperature_c=25.0,
         readings=[GasReading(gas_id="CH4", raw_ppm=25000, raw_percent=2.5)],
     )
-    # Aquece o filtro — sem propagar a exceção
+    # Aquece o filtro - sem propagar a exceção
     result = None
     try:
         for _ in range(20):
@@ -459,11 +458,11 @@ def test_pipeline_report_generator_exception_does_not_crash():
     print("  [OK] Exceção no gerador não derruba o PipelineHandler")
 
 
-# Runner
+# Execucao dos testes
 
 def run_all():
     print("\n" + "=" * 65)
-    print("  SafeGas Monitor — Testes da Etapa 7 (Laudos LaTeX)")
+    print("  SafeGas Monitor - Testes da Etapa 7 (Laudos LaTeX)")
     print("=" * 65)
 
     groups = [

@@ -1,4 +1,4 @@
-// SafeGas Monitor — Console de Supervisão Industrial
+// SafeGas Monitor - Script do Painel Web
 
 const API_BASE = '/api';
 

@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Gerador de Laudos LaTeX
-=====================================================
+SafeGas Monitor - Gerador de Laudos LaTeX
 Gera laudos técnicos automatizados no padrão ABNT quando um evento
 CRITICAL é detectado pela Central de Comando.
 
@@ -46,7 +45,7 @@ log = logging.getLogger(__name__)
 
 # Cabeçalho do projeto (para o laudo)
 _INSTITUTION = "UNIVAP — Universidade do Vale do Paraíba"
-_PROJECT     = "SafeGas Monitor — Projetos em Engenharia I"
+_PROJECT     = "SafeGas Monitor - Projetos em Engenharia I"
 _AUTHORS     = "Equipe SafeGas (Engenharia da Computação)"
 
 
@@ -180,7 +179,7 @@ def _build_latex(
         )
 
     # Documento completo
-    doc = rf"""% SafeGas Monitor — Laudo Técnico de Incidente
+    doc = rf"""% SafeGas Monitor - Laudo Técnico de Incidente
 % Gerado automaticamente em {generated_at}
 % ID do Incidente: {incident_id}
 % NÃO EDITAR MANUALMENTE — arquivo gerado pelo sistema
@@ -413,7 +412,6 @@ class LatexReportGenerator:
             reports_dir, charts_dir, compile_pdf,
         )
 
-    # ------------------------------------------------------------------
     def generate(
         self,
         processed: ProcessedReading,
@@ -491,7 +489,6 @@ class LatexReportGenerator:
         )
         return incident
 
-    # ------------------------------------------------------------------
     def _compile(self, tex_path: str) -> Optional[str]:
         """
         Tenta compilar o .tex com pdflatex.

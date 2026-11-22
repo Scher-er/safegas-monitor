@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Testes da Etapa 5 (LEL + AlertManager + Pipeline)
-====================================================================
+SafeGas Monitor - Testes da Etapa 5 (LEL + AlertManager + Pipeline)
 Testa:
   1. LELCalculator: gás único, mistura, Zabetakis, edge cases
   2. risk_to_level: todos os limiares de alerta
@@ -27,7 +26,7 @@ from central_command.alerts.alert_manager import (
 from central_command.pipeline_handler import PipelineHandler
 
 
-# Helpers
+# Funcoes auxiliares
 
 def make_readings(**gas_percents) -> list:
     """
@@ -193,19 +192,19 @@ def test_lel_five_gases_mixture():
     )
     result = calc.calculate(readings, temperature_c=25.0)
     assert len(result.gases_contributing) == 5
-    # Cada gás contribui 10% → LEL_mix = 100/0.5 = 200%? Vamos verificar
+    # Cada gás contribui 10% -> LEL_mix = 100/0.5 = 200%? Vamos verificar
     # Σ(Ci/LELi) = 0.5/5 + 1.25/12.5 + 0.4/4 + 0.21/2.1 + 0.18/1.8
     #             = 0.1 + 0.1 + 0.1 + 0.1 + 0.1 = 0.5
     # LEL_mix = 100/0.5 = 200%;  C_mix = 2.54%;  R = 2.54/200 * 100 = 1.27%... 
     # Mas R = (Cmix / LEL_mix) * 100 ou R = Σ(Ci/LELi) * 100?
     # Re: R = C_mix/LEL_mix * 100; e LEL_mix = 100/0.5 = 200
     # C_mix = 0.5+1.25+0.4+0.21+0.18 = 2.54
-    # R = (2.54/200)*100 = 1.27% — não, espera:
+    # R = (2.54/200)*100 = 1.27% - não, espera:
     # A definição correta: Σ(Ci/LELi) = razão de cada gás em relação ao seu LEL
     # Se Σ(Ci/LELi) = 0.5 (50%), então R = 50% do LEL_mix
     # Mas R = C_mix / LEL_mix * 100:
     # C_mix = 2.54, LEL_mix = 100/0.5 = 200
-    # R = 2.54/200 * 100 = 1.27% — isso parece errado
+    # R = 2.54/200 * 100 = 1.27% - isso parece errado
     # 
     # Vamos pensar diferente:
     # Para Le Chatelier: a mistura está no LEL quando Σ(Ci/LELi) = 1.0 (100%)
@@ -213,7 +212,7 @@ def test_lel_five_gases_mixture():
     # Mas nossa implementação usa R = (C_mix / LEL_mix) * 100
     # Ambas são equivalentes:
     # C_mix / LEL_mix = C_mix / (100/Σ) = C_mix * Σ / 100
-    # = Σ(Ci) * Σ(Ci/LELi) / 100  ← não são equivalentes em geral!
+    # = Σ(Ci) * Σ(Ci/LELi) / 100  <- não são equivalentes em geral!
     #
     # A fórmula correta de Le Chatelier para risco é:
     # R = Σ(Ci/LELi) * 100  (porcento da mistura combustível em relação ao LEL)
@@ -370,7 +369,7 @@ def test_alert_manager_callback_exception_does_not_crash():
     print("  [OK] Exceção no callback tratada: servidor não caiu")
 
 
-# PipelineHandler — integração completa
+# PipelineHandler - integração completa
 
 def test_pipeline_handler_processes_packet():
     """PipelineHandler deve processar um TelemetryPacket completo."""
@@ -400,7 +399,7 @@ def test_pipeline_handler_critical_scenario():
     handler = PipelineHandler(filter_mode="kalman", verbose_output=False)
     handler.set_critical_callback(lambda p, l: critical_fired.__setitem__(0, True))
 
-    # CH4 = 2.5% → R = (2.5/5.0)*100 = 50% → CRITICAL
+    # CH4 = 2.5% -> R = (2.5/5.0)*100 = 50% -> CRITICAL
     for _ in range(20):
         pkt = make_packet("EPI-CRIT", CH4=2.5)
         result = handler(pkt)
@@ -462,11 +461,11 @@ def test_pipeline_handler_with_real_simulator():
     print(f"  [OK] Escalonamento de alertas observado: {sorted(levels_seen)}")
 
 
-# Runner
+# Execucao dos testes
 
 def run_all():
     print("\n" + "=" * 65)
-    print("  SafeGas Monitor — Testes da Etapa 5 (LEL + Alertas)")
+    print("  SafeGas Monitor - Testes da Etapa 5 (LEL + Alertas)")
     print("=" * 65)
 
     groups = [

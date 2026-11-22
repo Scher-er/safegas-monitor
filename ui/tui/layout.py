@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Componentes da Interface (Rich)
-===========================================================
+SafeGas Monitor - Componentes da Interface (Rich)
 Gera os painéis e tabelas para a interface gráfica no terminal (TUI),
 usando a biblioteca 'rich'.
 
@@ -41,7 +40,6 @@ class TuiBuilder:
     def __init__(self, state: MonitorState):
         self._state = state
 
-    # ------------------------------------------------------------------
     def build_header(self) -> Panel:
         """Cria o cabeçalho com estatísticas globais."""
         stats = self._state.stats
@@ -51,7 +49,7 @@ class TuiBuilder:
         uptime_str = f"{h:02d}:{m:02d}:{s:02d}"
 
         text = Text()
-        text.append("SafeGas Monitor — Central de Comando\n", style="bold cyan")
+        text.append("SafeGas Monitor - Central de Comando\n", style="bold cyan")
         text.append(f"Uptime: {uptime_str} | ", style="white")
         text.append(f"EPIs Ativos: {stats['devices_count']} | ", style="white")
         text.append(f"Pacotes/s: {stats['throughput_pps']:.1f} | ", style="white")
@@ -68,7 +66,6 @@ class TuiBuilder:
             expand=True,
         )
 
-    # ------------------------------------------------------------------
     def build_devices_table(self) -> Table:
         """Cria a tabela de EPIs monitorados em tempo real."""
         table = Table(
@@ -115,7 +112,6 @@ class TuiBuilder:
 
         return table
 
-    # ------------------------------------------------------------------
     def build_history_table(self) -> Table:
         """Cria a tabela com histórico de alertas recentes."""
         table = Table(
@@ -148,7 +144,6 @@ class TuiBuilder:
 
         return table
 
-    # ------------------------------------------------------------------
     def build_incidents_table(self) -> Table:
         """Cria a tabela com laudos gerados."""
         table = Table(
@@ -179,7 +174,6 @@ class TuiBuilder:
 
         return table
 
-    # ------------------------------------------------------------------
     def build_layout(self) -> Layout:
         """Monta o layout completo (tela dividida)."""
         layout = Layout()

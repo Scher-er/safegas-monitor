@@ -286,7 +286,7 @@ class SimulationManager:
                 count += 1
 
             if not count:
-                # Fallback se não houver atribuições no banco: cria os dois EPIs padrão
+                # Caso nao existam atribuicoes no banco, inicia os dois EPIs padrao
                 self.add_device("EPI-001", "F-042", "LOC-003", scenario="leak")
                 self.add_device("EPI-002", "F-043", "LOC-002", scenario="baseline")
                 count = 2

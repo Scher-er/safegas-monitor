@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Testes da Etapa 2 (Simulador de EPI)
-=======================================================
+SafeGas Monitor - Testes da Etapa 2 (Simulador de EPI)
 Testa:
   1. GasSensorSimulator: ruído gaussiano, limites físicos, todos os perfis
   2. EPISimulator: geração de pacotes, callback, múltiplos sensores
@@ -17,7 +16,7 @@ from config.data_contracts import TelemetryPacket, GasReading
 from epi_simulator.simulator import GasSensorSimulator, EPISimulator, SignalProfile
 
 
-# Helpers
+# Funcoes auxiliares
 
 def collect_readings(sensor: GasSensorSimulator, n: int) -> list[float]:
     """Coleta n leituras de raw_percent de um sensor."""
@@ -221,7 +220,7 @@ def test_epi_custom_sensor_config():
             }
         }
     )
-    # Com ruído quase zero, CH4 deve ser ≈ 2.0%
+    # Com ruído quase zero, CH4 deve ser ~ 2.0%
     readings = [epi.generate_packet() for _ in range(20)]
     ch4_vals = [
         r.raw_percent
@@ -235,11 +234,11 @@ def test_epi_custom_sensor_config():
     print(f"  [OK] Sensor CH4 customizado: μ={mean_ch4:.4f}% (esp=2.0%)")
 
 
-# Runner
+# Execucao dos testes
 
 def run_all():
     print("\n" + "=" * 60)
-    print("  SafeGas Monitor — Testes da Etapa 2 (Simulador EPI)")
+    print("  SafeGas Monitor - Testes da Etapa 2 (Simulador EPI)")
     print("=" * 60)
 
     sensor_tests = [

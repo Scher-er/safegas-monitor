@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Gerenciador de Alertas
-===================================================
+SafeGas Monitor - Gerenciador de Alertas
 Classifica o nível de risco de um ProcessedReading e executa as
 ações correspondentes a cada nível de alerta.
 
@@ -98,7 +97,6 @@ class AlertManager:
         }
         self._last_alert_level: Optional[str] = None
 
-    # ------------------------------------------------------------------
     def classify(
         self,
         processed: ProcessedReading,
@@ -153,7 +151,6 @@ class AlertManager:
 
         return processed
 
-    # ------------------------------------------------------------------
     def _dispatch_attention(self, processed: ProcessedReading, lel: LELResult):
         log.info(
             "[ATENCAO] device=%s worker=%s R=%.2f%% gases=%s",
@@ -187,9 +184,7 @@ class AlertManager:
         except Exception as e:
             log.error("Erro no callback on_critical: %s", e)
 
-    # ------------------------------------------------------------------
     # Handlers padrão (substituídos nas Etapas seguintes)
-    # ------------------------------------------------------------------
     def _default_attention(self, processed: ProcessedReading, lel: LELResult):
         ts = processed.timestamp[11:19]
         print(
@@ -217,7 +212,6 @@ class AlertManager:
             f"  >> Gerando laudo tecnico LaTeX...\n"
         )
 
-    # ------------------------------------------------------------------
     @property
     def stats(self) -> dict:
         """Contagem acumulada de eventos por nível de alerta."""

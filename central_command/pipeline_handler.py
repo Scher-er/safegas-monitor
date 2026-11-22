@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Handler do Pipeline Completo
-=============================================================
+SafeGas Monitor - Handler do Pipeline Completo
 Encadeia as etapas de processamento recebidas pelo servidor:
 
     TelemetryPacket
@@ -106,7 +105,6 @@ class PipelineHandler:
 
         log.info("PipelineHandler inicializado: filtro=%s", filter_mode)
 
-    # ------------------------------------------------------------------
     def __call__(
         self,
         packet: TelemetryPacket,
@@ -202,7 +200,6 @@ class PipelineHandler:
 
         return processed
 
-    # ------------------------------------------------------------------
     def _generate_report(self, processed, lel_result):
         """Gera laudo LaTeX e insere IncidentRecord no MongoDB."""
         try:
@@ -232,7 +229,6 @@ class PipelineHandler:
             log.error("Erro ao gerar laudo LaTeX: %s", e, exc_info=True)
             return None
 
-    # ------------------------------------------------------------------
     def _print_summary(self, packet, processed, lel_result):
         """Imprime resumo legível no terminal da Central."""
         ts = packet.timestamp[11:19]
@@ -260,7 +256,6 @@ class PipelineHandler:
             f"T={packet.temperature_c:.1f}C | {level} | {gases}"
         )
 
-    # ------------------------------------------------------------------
     @property
     def stats(self) -> dict:
         """Estatísticas combinadas do handler."""

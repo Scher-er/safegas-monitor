@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Comparação Visual de Filtros (Etapa 4)
-=========================================================
+SafeGas Monitor - Comparação Visual de Filtros (Etapa 4)
 Gera um gráfico de 3 painéis comparando:
   - Sinal bruto (com ruído gaussiano)
   - Filtro de Média Móvel (MA)
@@ -104,7 +103,7 @@ def run():
     kf2_mae  = np.mean(kf2_err[skip:])
 
     print("\n" + "=" * 62)
-    print("  SafeGas Monitor — Comparação de Filtros (Etapa 4)")
+    print("  SafeGas Monitor - Comparação de Filtros (Etapa 4)")
     print("=" * 62)
     print(f"  Cenário 1 (Rampa): RAMP_UP | ruído σ={NOISE_STD:.2f} | {N_SAMPLES} amostras")
     print(f"  Nota: filtros introduzem LAG em rampas → MAE maior é esperado")
@@ -121,11 +120,11 @@ def run():
     print(f"  {'Kalman':<16} {kf2_mae:>8.4f}  {100*(1-kf2_mae/raw2_mae):.1f}% melhor")
     print("=" * 62)
 
-    # Plot
+    # Geracao dos graficos
     plt.style.use("seaborn-v0_8-whitegrid")
     fig = plt.figure(figsize=(14, 10))
     fig.suptitle(
-        "SafeGas Monitor — Comparação de Filtros Digitais\n"
+        "SafeGas Monitor - Comparação de Filtros Digitais\n"
         f"Cenário: Vazamento crescente CH₄ | Ruído σ={NOISE_STD:.2f} | {N_SAMPLES}s @ 1 Hz",
         fontsize=13, fontweight="bold", y=0.98,
     )

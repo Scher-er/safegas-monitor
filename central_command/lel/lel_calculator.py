@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Calculador de LEL de Misturas
-==========================================================
+SafeGas Monitor - Calculador de LEL de Misturas
 Implementa:
   1. Correção de LEL por temperatura (Zabetakis, 1965)
   2. Equação de Le Chatelier para misturas de gases inflamáveis
@@ -100,7 +99,6 @@ class LELCalculator:
         self._min_conc = min_concentration
         log.debug("LELCalculator inicializado (min_conc=%.2e%%)", min_concentration)
 
-    # ------------------------------------------------------------------
     def _zabetakis_correction(self, lel_25: float, temperature_c: float) -> float:
         """
         Corrige o LEL de um gás para a temperatura ambiente atual.
@@ -126,7 +124,6 @@ class LELCalculator:
         )
         return lel_t
 
-    # ------------------------------------------------------------------
     def _le_chatelier(
         self,
         concentrations: dict[str, float],
@@ -155,7 +152,6 @@ class LELCalculator:
 
         return 100.0 / summation
 
-    # ------------------------------------------------------------------
     def calculate(
         self,
         readings: list[GasReading],
@@ -202,7 +198,7 @@ class LELCalculator:
         c_mix = sum(concentrations.values())
 
         if not gases_contributing:
-            # Nenhum gás detectável → risco zero
+            # Nenhum gás detectável -> risco zero
             log.debug("Nenhum gás acima do limiar de detecção.")
             return LELResult(
                 lel_mix_percent=float("inf"),

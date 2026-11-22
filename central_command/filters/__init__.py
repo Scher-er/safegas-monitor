@@ -1,2 +1,2 @@
-# SafeGas Monitor — pacote Python
+# SafeGas Monitor - pacote Python
 

@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Pipeline de Filtragem
-==================================================
+SafeGas Monitor - Pipeline de Filtragem
 Gerencia instâncias de filtros por (device_id, gas_id) e aplica
 a filtragem sobre TelemetryPackets recebidos pelo servidor.
 
@@ -54,7 +53,7 @@ class FilterPipeline:
     Uso:
         pipeline = FilterPipeline(mode="kalman")
         processed = pipeline.process(packet)
-        # processed.readings[i].filtered_percent  ← valor suavizado
+        # processed.readings[i].filtered_percent  <- valor suavizado
     """
 
     def __init__(
@@ -88,7 +87,6 @@ class FilterPipeline:
             mode, moving_avg_window, kalman_Q, kalman_R,
         )
 
-    # ------------------------------------------------------------------
     def _get_ma(self, key: _FilterKey) -> MovingAverageFilter:
         """Retorna (criando se necessário) o filtro MA para a chave."""
         if key not in self._ma_filters:
@@ -106,7 +104,6 @@ class FilterPipeline:
             log.debug("Novo KalmanFilter1D: device=%s, gas=%s", *key)
         return self._kf_filters[key]
 
-    # ------------------------------------------------------------------
     def process(self, packet: TelemetryPacket) -> ProcessedReading:
         """
         Aplica filtragem em cada leitura do pacote.
@@ -170,7 +167,6 @@ class FilterPipeline:
             filter_used=filter_used,
         )
 
-    # ------------------------------------------------------------------
     def reset_device(self, device_id: str) -> None:
         """Remove todos os filtros de um EPI (ex: ao desconectar)."""
         keys_to_remove = [k for k in self._ma_filters if k[0] == device_id]
@@ -187,7 +183,6 @@ class FilterPipeline:
         self._kf_filters.clear()
         log.info("Todos os filtros resetados.")
 
-    # ------------------------------------------------------------------
     @property
     def active_filter_count(self) -> int:
         """Número total de instâncias de filtro ativas."""

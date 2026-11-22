@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Contrato de Dados (Data Contracts)
-=====================================================
+SafeGas Monitor - Contrato de Dados (Data Contracts)
 Define as estruturas de dados trafegadas via Socket e armazenadas
 no banco. Usar dataclasses garante tipagem e serialização fácil.
 """
@@ -11,9 +10,7 @@ from typing import Dict, Optional
 import json
 
 
-# ---------------------------------------------------------------------------
 # Leitura individual de um sensor de gás
-# ---------------------------------------------------------------------------
 @dataclass
 class GasReading:
     """Representa a leitura de UM gás em um instante."""
@@ -26,9 +23,7 @@ class GasReading:
     lel_contribution: Optional[float] = None  # Ci / LELi para Le Chatelier
 
 
-# ---------------------------------------------------------------------------
-# Pacote de Telemetria — enviado pelo EPI via Socket a cada amostragem
-# ---------------------------------------------------------------------------
+# Pacote de Telemetria - enviado pelo EPI via Socket a cada amostragem
 @dataclass
 class TelemetryPacket:
     """
@@ -72,9 +67,7 @@ class TelemetryPacket:
         return TelemetryPacket(readings=readings, **d)
 
 
-# ---------------------------------------------------------------------------
 # Resultado do processamento pela Central de Comando
-# ---------------------------------------------------------------------------
 @dataclass
 class ProcessedReading:
     """
@@ -94,9 +87,7 @@ class ProcessedReading:
     filter_used:        str                 # "moving_avg" | "kalman"
 
 
-# ---------------------------------------------------------------------------
-# Registro de Incidente (MongoDB — incidents collection)
-# ---------------------------------------------------------------------------
+# Registro de Incidente (MongoDB - incidents collection)
 @dataclass
 class IncidentRecord:
     """

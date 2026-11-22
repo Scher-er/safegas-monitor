@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Teste de Sanidade da Etapa 1
-===============================================
+SafeGas Monitor - Teste de Sanidade da Etapa 1
 Verifica que:
 1. A estrutura de pastas está correta
 2. Os módulos de configuração importam sem erro
@@ -47,7 +46,7 @@ def test_data_contracts():
         ]
     )
 
-    # Serializar → desserializar → verificar integridade
+    # Serializar -> desserializar -> verificar integridade
     json_str = packet.to_json()
     assert isinstance(json_str, str), "to_json deve retornar string"
 
@@ -88,7 +87,7 @@ def test_project_structure():
 
 def run_all():
     print("\n" + "=" * 55)
-    print("  SafeGas Monitor — Testes de Sanidade da Etapa 1")
+    print("  SafeGas Monitor - Testes de Sanidade da Etapa 1")
     print("=" * 55)
     tests = [test_imports, test_data_contracts, test_project_structure]
     passed = 0

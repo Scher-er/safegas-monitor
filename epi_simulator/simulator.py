@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Simulador de EPI
-=============================================
+SafeGas Monitor - Simulador de EPI
 Implementa a simulação de sensores eletroquímicos de gás com:
   - Sinal base configurável (constante, rampa ou senoidal)
   - Ruído branco gaussiano N(0, σ²) para emular instabilidade real
@@ -130,7 +129,6 @@ class GasSensorSimulator:
             gas_id, base_concentration, noise_std, profile.value, self._inertia_alpha
         )
 
-    # ------------------------------------------------------------------
     def _compute_base(self) -> float:
         """Calcula C_base(t) de acordo com o perfil configurado."""
         n = self._sample_count
@@ -152,23 +150,23 @@ class GasSensorSimulator:
             return self._step_tgt if n >= self._step_at else self._base
 
         elif self._profile == SignalProfile.DYNAMIC_LEAK:
-            # Vazamento físico não-linear (S-Curve / cinética de expansão gasosa) + pluma turbulenta
+            # Curva nao-linear de vazamento com variacao de fluxo
             if n < self._leak_start:
-                # Pré-vazamento: pequenas flutuações no baseline
+                # Antes do vazamento: oscilacao leve em torno do valor base
                 drift = self._rng.normal(0.0, self._drift_sigma)
                 return max(0.0, self._base + drift)
 
             progress = min(1.0, max(0.0, (n - self._leak_start) / float(self._leak_duration)))
-            # Transição sigmoidal suave (Hermite cubic)
+            # Subida gradual da concentracao
             s_curve = progress * progress * (3.0 - 2.0 * progress)
             macro_trend = self._base + (self._peak_target - self._base) * s_curve
 
-            # Dinâmica de vórtices turbulentos (convective eddies)
+            # Oscilacao de fluxo durante a dispersao do gas
             # Decaimento autoregressivo com injeção estocástica proporcional à concentração
             eddy_noise = self._rng.normal(0.0, 0.035 * max(0.1, macro_trend))
             self._turbulent_state = 0.78 * self._turbulent_state + eddy_noise
 
-            # Ocasional baforada/rajada de gás (puffs) típica de vazamentos sob pressão
+            # Picos rapidos de concentracao durante o vazamento
             if self._rng.random() < 0.12 and progress > 0.1:
                 puff = self._rng.uniform(0.02, 0.08) * macro_trend
                 self._turbulent_state += puff
@@ -176,7 +174,7 @@ class GasSensorSimulator:
             return max(0.0, macro_trend + self._turbulent_state)
 
         elif self._profile == SignalProfile.STOCHASTIC_DRIFT:
-            # Flutuação ambiental orgânica (Processo de Ornstein-Uhlenbeck)
+            # Oscilacao ambiental continua (Ornstein-Uhlenbeck)
             # Reversão contínua para self._base com perturbações de fluxo de ar
             dt = 1.0 / SAMPLE_RATE_HZ
             drift = self._drift_theta * (self._base - self._drift_state) * dt
@@ -210,7 +208,6 @@ class GasSensorSimulator:
 
         return self._base
 
-    # ------------------------------------------------------------------
     def next_reading(self) -> GasReading:
         """
         Gera a próxima leitura do sensor.
@@ -237,7 +234,7 @@ class GasSensorSimulator:
         # Limita ao intervalo físico válido [0, UEL]
         c_raw = float(np.clip(c_raw, 0.0, self.uel))
 
-        # Converte % v/v → PPM  (1% = 10 000 PPM)
+        # Converte % v/v para PPM (1% = 10000 PPM)
         ppm = c_raw * 10_000.0
 
         self._sample_count += 1
@@ -248,7 +245,6 @@ class GasSensorSimulator:
             raw_percent=round(c_raw, 6),
         )
 
-    # ------------------------------------------------------------------
     def reset(self, base_concentration: Optional[float] = None):
         """Reinicia o sensor, opcionalmente alterando a concentração base."""
         self._sample_count = 0
@@ -329,7 +325,6 @@ class EPISimulator:
             device_id, worker_id, location_id, self.scenario, list(self._sensors.keys())
         )
 
-    # ------------------------------------------------------------------
     def _simulate_temperature(self) -> float:
         """Retorna temperatura ambiente simulada com inércia térmica e micro-deriva."""
         target = TEMPERATURE_BASE_C + self._temp_drift + self._temp_rng.normal(loc=0.0, scale=TEMPERATURE_NOISE_STD)
@@ -518,7 +513,6 @@ class EPISimulator:
         )
         return sim
 
-    # ------------------------------------------------------------------
     def generate_packet(self) -> TelemetryPacket:
         """
         Gera um TelemetryPacket com a leitura atual de todos os sensores.
@@ -538,7 +532,6 @@ class EPISimulator:
             readings=readings,
         )
 
-    # ------------------------------------------------------------------
     def run(
         self,
         on_packet: Callable[[TelemetryPacket], None],
@@ -580,7 +573,6 @@ class EPISimulator:
             self._running = False
             log.info("EPISimulator encerrado após %d pacotes.", count)
 
-    # ------------------------------------------------------------------
     def stop(self) -> None:
         """Para o loop de amostragem."""
         self._running = False
@@ -607,7 +599,7 @@ class EPISimulator:
         )
 
 
-# Demo standalone
+# Execucao isolada para teste do simulador
 def _demo_print(packet: TelemetryPacket) -> None:
     """Callback de demonstração: imprime o pacote no terminal."""
     ts = packet.timestamp[11:19]  # HH:MM:SS
@@ -623,7 +615,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
     print("=" * 65)
-    print(" SafeGas Monitor — Demo do Simulador de EPI")
+    print(" SafeGas Monitor - Demo do Simulador de EPI")
     print("=" * 65)
     print(" Cenário: CH4 com rampa de vazamento + CO constante baixo")
     print(" Ctrl+C para parar\n")

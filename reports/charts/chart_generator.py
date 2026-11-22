@@ -1,6 +1,5 @@
 """
-SafeGas Monitor — Gerador de Gráficos para Laudos
-=============================================================
+SafeGas Monitor - Gerador de Gráficos para Laudos
 Gera gráficos matplotlib (PNG) a partir do histórico de leituras
 de um EPI, para serem embutidos no laudo LaTeX.
 
@@ -125,7 +124,7 @@ class IncidentChartGenerator:
 
             title_ts = incident_timestamp[11:19] if incident_timestamp else ""
             fig.suptitle(
-                f"SafeGas Monitor — Laudo Técnico de Incidente\n"
+                f"SafeGas Monitor - Laudo Técnico de Incidente\n"
                 f"Dispositivo: {device_id}   |   Evento: {incident_timestamp[:10]} {title_ts}",
                 fontsize=13, fontweight="bold", y=0.99,
             )
