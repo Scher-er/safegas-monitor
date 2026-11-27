@@ -366,9 +366,20 @@ async function fetchStats() {
             document.getElementById('val-devices').textContent = stats.devices_count || 0;
             document.getElementById('val-pps').textContent = (stats.throughput_pps || 0).toFixed(1);
             document.getElementById('val-incidents').textContent = stats.incidents_count || 0;
+
+            const mongoEl = document.getElementById('mongo-status');
+            if (mongoEl) {
+                if (stats.mongo_connected) {
+                    mongoEl.textContent = `CONECTADO (${stats.mongo_db || 'safegas_monitor'})`;
+                    mongoEl.style.color = '#4ade80';
+                } else {
+                    mongoEl.textContent = 'MODO OFFLINE';
+                    mongoEl.style.color = '#fbbf24';
+                }
+            }
         }
     } catch (e) {
-        console.error("Error fetching stats:", e);
+        console.error("Erro ao buscar estatisticas:", e);
     }
 }
 
@@ -412,7 +423,7 @@ async function fetchDevices() {
         }
         tbody.innerHTML = html;
     } catch (e) {
-        console.error("Error fetching devices:", e);
+        console.error("Erro ao buscar dispositivos:", e);
     }
 }
 
@@ -441,7 +452,7 @@ async function fetchHistory() {
         }
         tbody.innerHTML = html;
     } catch (e) {
-        console.error("Error fetching history:", e);
+        console.error("Erro ao buscar historico:", e);
     }
 }
 
@@ -476,7 +487,7 @@ async function fetchIncidents() {
         }
         tbody.innerHTML = html;
     } catch (e) {
-        console.error("Error fetching incidents:", e);
+        console.error("Erro ao buscar incidentes:", e);
     }
 }
 

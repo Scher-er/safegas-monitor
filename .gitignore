@@ -1,9 +1,10 @@
-# Runtime database & WAL files
+# Bancos de dados locais e arquivos temporarios
 database/sql/safegas.db
 database/sql/*.db-shm
 database/sql/*.db-wal
+database/nosql/data/
 
-# Generated reports & charts
+# Laudos e graficos gerados em execucao
 reports/latex/*.tex
 reports/latex/*.pdf
 reports/latex/*.aux
@@ -12,7 +13,7 @@ reports/charts/*.png
 reports/charts/*.pdf
 reports/emails/
 
-# Python cache & virtual environments
+# Cache Python e ambientes virtuais
 __pycache__/
 **/__pycache__/
 *.pyc
@@ -23,7 +24,7 @@ venv/
 *.log
 logs/
 
-# IDE & local credentials
+# Arquivos de IDE e credenciais locais
 .vscode/
 .idea/
 *.code-workspace

@@ -143,6 +143,7 @@ class MongoTelemetryRepository:
             # Força a verificação de conectividade
             self._client.admin.command("ping")
             self._db = self._client[db_name]
+            self._ensure_collections()
             self._telemetry = self._db[MONGO_COLLECTION_TELEMETRY]
             self._incidents  = self._db[MONGO_COLLECTION_INCIDENTS]
             self._ensure_indexes()
@@ -152,6 +153,16 @@ class MongoTelemetryRepository:
             log.warning(
                 "MongoDB indisponível (%s). Operações de telemetria desativadas.", e
             )
+
+    def _ensure_collections(self) -> None:
+        """Cria explicitamente o banco e as colecoes caso ainda nao existam."""
+        existing = set(self._db.list_collection_names())
+        for col_name in (MONGO_COLLECTION_TELEMETRY, MONGO_COLLECTION_INCIDENTS):
+            if col_name not in existing:
+                try:
+                    self._db.create_collection(col_name)
+                except Exception:
+                    pass
 
     def _ensure_indexes(self) -> None:
         """Cria índices necessários se ainda não existirem."""

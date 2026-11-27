@@ -23,7 +23,11 @@ def init_api(state: MonitorState, handler: Optional[Any] = None, sim_manager: Op
 def get_stats():
     if not _monitor_state:
         return jsonify({})
-    return jsonify(_monitor_state.stats)
+    stats = dict(_monitor_state.stats)
+    from config.settings import MONGO_DB_NAME
+    stats["mongo_connected"] = bool(_pipeline_handler.stats.get("mongo_available", False)) if _pipeline_handler else False
+    stats["mongo_db"] = MONGO_DB_NAME
+    return jsonify(stats)
 
 @app.route("/api/devices", methods=["GET"])
 def get_devices():

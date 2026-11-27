@@ -16,6 +16,7 @@ from rich.live import Live
 
 from central_command.server import CentralCommandServer
 from central_command.pipeline_handler import PipelineHandler
+from database.nosql.mongo_bootstrap import ensure_mongodb_running, ensure_compass_connection
 from ui.tui.state import MonitorState
 from ui.tui.layout import TuiBuilder
 
@@ -31,8 +32,17 @@ def run_flask_app():
 
 def main():
     print("Iniciando SafeGas Monitor - Central de Comando (MQTT + Flask)...")
-    
-    # 1. Inicia o broker MQTT local em segundo plano
+
+    # 1. Garante o MongoDB em execucao na maquina e cria a conexao no Compass se necessario
+    print("Verificando servico MongoDB local...")
+    mongo_ok, mongo_proc = ensure_mongodb_running()
+    if mongo_ok:
+        ensure_compass_connection()
+        print("MongoDB ativo em mongodb://localhost:27017/ (banco: safegas_monitor).")
+    else:
+        print("MongoDB nao encontrado na maquina - seguindo em modo degradado (apenas SQLite).")
+
+    # 2. Inicia o broker MQTT local em segundo plano
     print("Iniciando Broker MQTT local em segundo plano...")
     broker_proc = subprocess.Popen(
         [sys.executable, "mqtt_broker.py"],
@@ -41,7 +51,7 @@ def main():
     )
     time.sleep(2) # Aguarda o broker subir
     
-    # 2. Inicia o gerenciador de simulacao com os EPIs ativos cadastrados no SQLite
+    # 3. Inicia o gerenciador de simulacao com os EPIs ativos cadastrados no SQLite
     print("Iniciando Simulador Multi-EPI (SimulationManager)...")
     from epi_simulator.client import SimulationManager
     sim_manager = SimulationManager(host="127.0.0.1", port=1883)
@@ -90,8 +100,15 @@ def main():
         # Encerra broker de forma limpa
         try:
             broker_proc.terminate()
-        except:
+        except Exception:
             pass
+
+        # Encerra o mongod local apenas se foi iniciado por este processo
+        if mongo_proc is not None:
+            try:
+                mongo_proc.terminate()
+            except Exception:
+                pass
             
         print("Central de Comando encerrada e memória liberada.")
 
